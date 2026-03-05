@@ -1,0 +1,3027 @@
+<!DOCTYPE html>
+<html lang='ru'>
+<head>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+  <title>ТЗ (полная версия) — Сквозная аналитика FitBase</title>
+  <style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 40px 24px 80px; background: #050814; color: #e1e4f0; line-height: 1.6; }
+a { color: #8b83ff; }
+a:hover { text-decoration: underline; }
+main { max-width: 960px; margin: 0 auto; background: #0f111a; padding: 32px 40px; border-radius: 16px; box-shadow: 0 18px 45px rgba(0,0,0,.6); border: 1px solid #2a2e45; }
+h1, h2, h3, h4 { font-weight: 700; }
+h1 { font-size: 28px; margin-top: 0; }
+h2 { font-size: 22px; margin-top: 36px; border-bottom: 1px solid #2a2e45; padding-bottom: 6px; }
+h3 { font-size: 18px; margin-top: 24px; }
+code { background: #1a1d2e; padding: 2px 4px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; }
+pre code { display: block; padding: 12px 14px; overflow-x: auto; }
+pre { background: #0b0d18; border-radius: 8px; border: 1px solid #2a2e45; }
+table { border-collapse: collapse; width: 100%; margin: 16px 0 24px; font-size: 13px; }
+th, td { border: 1px solid #2a2e45; padding: 8px 10px; }
+th { background: #1a1d2e; text-align: left; }
+tr:nth-child(even) { background: #101325; }
+ul, ol { padding-left: 22px; }
+hr { border: none; border-top: 1px solid #2a2e45; margin: 32px 0; }
+.small-meta { color: #8b8fa8; font-size: 13px; margin-bottom: 16px; }
+.top-links { font-size: 13px; color: #8b8fa8; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+<main>
+  <div class='top-links'>
+    <a href='index.html'>&larr; Вернуться к компактной версии с макетами дашбордов</a>
+  </div>
+  <h1 id="fitbase">ТЗ: Сквозная аналитика маркетинга FitBase</h1>
+<p><em>Version: 1.0</em>
+<em>Last updated: 2026-03-05</em>
+<em>Автор: Руководитель маркетинга + AI-ассистент</em></p>
+<hr />
+<h2 id="_1">Содержание</h2>
+<ol>
+<li><a href="#1-цель-и-контекст">Цель и контекст</a></li>
+<li><a href="#2-архитектура">Архитектура</a></li>
+<li><a href="#3-модель-данных">Модель данных</a></li>
+<li><a href="#4-utm-конвенция">UTM-конвенция</a></li>
+<li><a href="#5-интеграции">Интеграции</a></li>
+<li><a href="#6-спецификация-дашбордов">Спецификация дашбордов</a></li>
+<li><a href="#7-методология-прогноза">Методология прогноза</a></li>
+<li><a href="#8-account-level-tracking">Account-Level Tracking</a></li>
+<li><a href="#9-этапы-реализации">Этапы реализации</a></li>
+<li><a href="#10-требования-к-дизайну">Требования к дизайну</a></li>
+</ol>
+<hr />
+<h2 id="1">1. Цель и контекст</h2>
+<h3 id="11-">1.1. Бизнес-контекст</h3>
+<p>FitBase — B2B SaaS CRM-система для фитнес-бизнеса (клубы, студии, школы, бассейны, падел-корты и др.). Подписочная модель, годовая подписка. Средний чек ~100 000 ₽/год. Три основных рынка: Россия, Казахстан, Узбекистан.</p>
+<p>Подробный профиль компании: <a href="../../Knowledge/company_profile.md">Strategic/Knowledge/company_profile.md</a></p>
+<h3 id="12-2026">1.2. Цели на 2026</h3>
+<table>
+<thead>
+<tr>
+<th>Метрика</th>
+<th>Значение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Рост</td>
+<td>x2</td>
+</tr>
+<tr>
+<td>Подключения (всего)</td>
+<td>3 000</td>
+</tr>
+<tr>
+<td>Новых из маркетинга</td>
+<td>1 500</td>
+</tr>
+<tr>
+<td>Выручка</td>
+<td>300 млн ₽</td>
+</tr>
+<tr>
+<td>MQL</td>
+<td>~4 600/год (~385/мес)</td>
+</tr>
+<tr>
+<td>Конверсия MQL → покупка</td>
+<td>25%</td>
+</tr>
+</tbody>
+</table>
+<h3 id="13">1.3. Назначение системы</h3>
+<p>Заменить Rick.ai собственной сквозной аналитикой, которая:</p>
+<ul>
+<li>связывает рекламные расходы по всем каналам и странам с лидами, MQL, SQL и оплатами в AmoCRM;</li>
+<li>даёт план-факт по каналам и странам;</li>
+<li>строит когорты по лидам (время от попадания в AmoCRM до покупки);</li>
+<li>прогнозирует оплаты на основе текущего пайплайна и исторических конверсий;</li>
+<li>отслеживает мультифилиальность (один аккаунт → несколько сделок);</li>
+<li>обеспечивает глубину до креатива (платные), до статьи (SEO), до площадки (посевы).</li>
+</ul>
+<h3 id="14-kpi">1.4. Основные KPI</h3>
+<p><strong>Первичные:</strong> целевые лиды (MQL/SQL) и продажи (подключения).</p>
+<p><strong>Параметры бизнеса:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Параметр</th>
+<th>Значение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Средний чек</td>
+<td>~100 000 ₽/год</td>
+</tr>
+<tr>
+<td>Цикл сделки</td>
+<td>~30 дней</td>
+</tr>
+<tr>
+<td>Лидов в месяц</td>
+<td>~1 000</td>
+</tr>
+<tr>
+<td>Целевых (MQL) в месяц</td>
+<td>~300</td>
+</tr>
+<tr>
+<td>Маркетинговый бюджет</td>
+<td>~2 млн ₽/мес</td>
+</tr>
+<tr>
+<td>Модель подписки</td>
+<td>Годовая</td>
+</tr>
+<tr>
+<td>Повторные продажи</td>
+<td>Есть (мультифилиальность)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="15-dimensions">1.5. Требуемые разрезы (dimensions)</h3>
+<table>
+<thead>
+<tr>
+<th>Разрез</th>
+<th>Описание</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Страна</td>
+<td>РФ / КЗ / УЗ</td>
+</tr>
+<tr>
+<td>Канал</td>
+<td>Яндекс.Директ, Google Ads, Meta, VK, Telegram Ads, TikTok, YouTube, SEO, SMM, посевы, вебинары, партнёрка, email, звонки, мессенджеры</td>
+</tr>
+<tr>
+<td>Кампания</td>
+<td>Рекламная кампания внутри канала</td>
+</tr>
+<tr>
+<td>Креатив</td>
+<td>Конкретное объявление / баннер / видео</td>
+</tr>
+<tr>
+<td>Стадия воронки</td>
+<td>Текущая стадия лида в AmoCRM</td>
+</tr>
+<tr>
+<td>Период</td>
+<td>День / неделя / месяц / произвольный диапазон</td>
+</tr>
+</tbody>
+</table>
+<h3 id="16">1.6. Пользователи</h3>
+<table>
+<thead>
+<tr>
+<th>Роль</th>
+<th>Доступ</th>
+<th>Частота</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Руководитель маркетинга</td>
+<td>Все дашборды, все разрезы</td>
+<td>Ежедневно</td>
+</tr>
+<tr>
+<td>Маркетологи по каналам</td>
+<td>Свой канал + общая картина</td>
+<td>Ежедневно</td>
+</tr>
+<tr>
+<td>Подрядчики (таргет, SEO)</td>
+<td>Свой канал</td>
+<td>По запросу</td>
+</tr>
+<tr>
+<td>CEO</td>
+<td>Только верхний уровень (Executive Overview)</td>
+<td>Еженедельно</td>
+</tr>
+</tbody>
+</table>
+<h3 id="17">1.7. Текущее состояние и источники</h3>
+<p>Подробное описание: <a href="../Current_State/README.md">Current_State/README.md</a></p>
+<p>Ключевое:
+- <strong>AmoCRM</strong> — 73 385 лидов, две воронки (Теплые + Вебинары/лидмагниты)
+- <strong>Rick.ai</strong> — уходим, заменяем этой системой
+- <strong>amocrm-analytics/</strong> — существующий ETL-пайплайн (Python, Streamlit)
+- <strong>Yandex.Метрика</strong> — стоит на всех лендингах
+- <strong>BotHelp</strong> — боты в Telegram/WhatsApp
+- <strong>Fitbase Lab</strong> — команда с опытом DataLens (bi.fitbase.io)</p>
+<hr />
+<h2 id="2">2. Архитектура</h2>
+<h3 id="21">2.1. Общая схема</h3>
+<pre><code>┌─────────────────────────────────────────────────────────────────┐
+│                      ИСТОЧНИКИ ДАННЫХ                           │
+├──────────┬──────────┬──────────┬──────────┬──────────┬──────────┤
+│ AmoCRM   │ Яндекс   │ Google   │ Meta     │ VK Ads   │ Telegram │
+│ API      │ Директ   │ Ads API  │ Marketing│ API      │ Ads      │
+│          │ API      │          │ API      │          │          │
+├──────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+│ Яндекс   │ Google   │ BotHelp  │ IP-      │ Ручной   │ TikTok/  │
+│ Метрика  │ Analytics│ API      │ телефония│ ввод     │ YouTube  │
+│ API      │ (КЗ/УЗ) │          │          │ (Google  │ (план.)  │
+│          │          │          │          │ Sheets)  │          │
+└──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+                              │
+                              ▼
+               ┌──────────────────────────┐
+               │      ETL Layer           │
+               │  Python (cron, ежедневно)│
+               │  Паттерн: amocrm-        │
+               │  analytics/etl/sync.py   │
+               └──────────────────────────┘
+                              │
+                              ▼
+               ┌──────────────────────────┐
+               │    Data Warehouse        │
+               │  ClickHouse (приоритет)  │
+               │  или PostgreSQL          │
+               └──────────────────────────┘
+                              │
+                              ▼
+               ┌──────────────────────────┐
+               │    Yandex DataLens       │
+               │  10 дашбордов            │
+               │  + Telegram-алерты       │
+               └──────────────────────────┘
+</code></pre>
+<h3 id="22">2.2. Выбор хранилища</h3>
+<table>
+<thead>
+<tr>
+<th>Вариант</th>
+<th>Плюсы</th>
+<th>Минусы</th>
+<th>Рекомендация</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ClickHouse (Yandex Cloud)</strong></td>
+<td>Нативная интеграция с DataLens, быстрые аналитические запросы, колоночное хранение</td>
+<td>Требует Yandex Cloud, сложнее для OLTP-запросов</td>
+<td><strong>Приоритет</strong></td>
+</tr>
+<tr>
+<td>PostgreSQL</td>
+<td>Простой, универсальный, команда знает</td>
+<td>Медленнее на аналитических запросах при росте данных</td>
+<td>Запасной вариант</td>
+</tr>
+</tbody>
+</table>
+<p>При объёме ~1 000 лидов/мес + ~50 000 строк расходов/год — оба варианта справятся. ClickHouse выгоднее при масштабировании и нативной связке с DataLens.</p>
+<h3 id="23-etl-layer">2.3. ETL Layer</h3>
+<p><strong>Паттерн:</strong> Python-скрипты по расписанию (cron / Yandex Cloud Functions).</p>
+<p><strong>Частота обновления:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Источник</th>
+<th>Частота</th>
+<th>Метод</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AmoCRM</td>
+<td>Каждые 15 мин (webhook) или 1 раз/час (polling)</td>
+<td>API v4</td>
+</tr>
+<tr>
+<td>Рекламные кабинеты</td>
+<td>1 раз/день (06:00 МСК)</td>
+<td>API каждой платформы</td>
+</tr>
+<tr>
+<td>Яндекс.Метрика</td>
+<td>1 раз/день (07:00 МСК)</td>
+<td>Reporting API</td>
+</tr>
+<tr>
+<td>Google Analytics</td>
+<td>1 раз/день (07:00 МСК)</td>
+<td>Data API v1</td>
+</tr>
+<tr>
+<td>BotHelp</td>
+<td>1 раз/день</td>
+<td>API</td>
+</tr>
+<tr>
+<td>Ручной ввод (посевы, ивенты)</td>
+<td>По факту</td>
+<td>Google Sheets → ETL</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Webhook от AmoCRM:</strong> при смене стадии / создании сделки → мгновенное обновление данных о лидах.</p>
+<h3 id="24">2.4. Инфраструктура</h3>
+<table>
+<thead>
+<tr>
+<th>Компонент</th>
+<th>Размещение</th>
+<th>Стоимость (оценка)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ClickHouse</td>
+<td>Yandex Cloud (s2.micro)</td>
+<td>~3 000–5 000 ₽/мес</td>
+</tr>
+<tr>
+<td>ETL-скрипты</td>
+<td>Yandex Cloud Functions или VPS</td>
+<td>~1 000–2 000 ₽/мес</td>
+</tr>
+<tr>
+<td>DataLens</td>
+<td>Yandex Cloud (бесплатный тариф)</td>
+<td>0 ₽</td>
+</tr>
+<tr>
+<td><strong>Итого</strong></td>
+<td></td>
+<td><strong>~4 000–7 000 ₽/мес</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="3">3. Модель данных</h2>
+<h3 id="31">3.1. Схема сущностей</h3>
+<pre><code>                    ┌──────────────┐
+                    │   Account    │
+                    │ (AmoCRM      │
+                    │  Contact/    │
+                    │  Company)    │
+                    └──────┬───────┘
+                           │ 1:N
+                           ▼
+┌──────────┐       ┌──────────────┐       ┌──────────────┐
+│   UTM    │──────&gt;│    Lead      │&lt;──────│ Funnel Stage │
+│  Tags    │  1:1  │ (AmoCRM Deal)│  1:N  │  History     │
+└──────────┘       └──────┬───────┘       └──────────────┘
+                           │
+              ┌────────────┼────────────┐
+              │            │            │
+              ▼            ▼            ▼
+       ┌───────────┐ ┌──────────┐ ┌──────────┐
+       │  Channel  │ │ Web      │ │ Bot      │
+       │  / Cost   │ │ Session  │ │ Session  │
+       │  (daily)  │ │ (Metrika)│ │ (BotHelp)│
+       └─────┬─────┘ └──────────┘ └──────────┘
+             │
+       ┌─────┴─────┐
+       ▼           ▼
+  ┌──────────┐ ┌──────────┐
+  │ Campaign │ │ Creative │
+  └──────────┘ └──────────┘
+</code></pre>
+<h3 id="32">3.2. Таблицы</h3>
+<h4 id="leads"><code>leads</code> — центральная таблица</h4>
+<p>Источник: AmoCRM API (сделки).</p>
+<table>
+<thead>
+<tr>
+<th>Поле</th>
+<th>Тип</th>
+<th>Источник</th>
+<th>Описание</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>lead_id</td>
+<td>INT</td>
+<td>AmoCRM deal.id</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>account_id</td>
+<td>INT</td>
+<td>AmoCRM contact.id / company.id</td>
+<td>FK → accounts</td>
+</tr>
+<tr>
+<td>pipeline_id</td>
+<td>INT</td>
+<td>AmoCRM pipeline.id</td>
+<td>Воронка (Теплые / Вебинары)</td>
+</tr>
+<tr>
+<td>current_stage</td>
+<td>VARCHAR</td>
+<td>AmoCRM status.name</td>
+<td>Текущая стадия</td>
+</tr>
+<tr>
+<td>lead_type</td>
+<td>ENUM</td>
+<td>Кастомное поле «Тип заявки»</td>
+<td>Lead / MQL / SQL</td>
+</tr>
+<tr>
+<td>country</td>
+<td>ENUM</td>
+<td>Тег или кастомное поле</td>
+<td>RF / KZ / UZ</td>
+</tr>
+<tr>
+<td>size_tag</td>
+<td>ENUM</td>
+<td>Тег</td>
+<td>XS / S / M / L / XL</td>
+</tr>
+<tr>
+<td>deal_value</td>
+<td>DECIMAL</td>
+<td>Поле «Бюджет»</td>
+<td>Сумма сделки, ₽</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>TIMESTAMP</td>
+<td>AmoCRM created_at</td>
+<td>Дата создания лида</td>
+</tr>
+<tr>
+<td>closed_at</td>
+<td>TIMESTAMP</td>
+<td>AmoCRM closed_at</td>
+<td>Дата закрытия (won/lost)</td>
+</tr>
+<tr>
+<td>is_won</td>
+<td>BOOLEAN</td>
+<td>AmoCRM status</td>
+<td>Оплата пришла</td>
+</tr>
+<tr>
+<td>is_lost</td>
+<td>BOOLEAN</td>
+<td>AmoCRM status</td>
+<td>Отказ</td>
+</tr>
+<tr>
+<td>loss_reason</td>
+<td>VARCHAR</td>
+<td>AmoCRM loss_reason</td>
+<td>Причина отказа</td>
+</tr>
+<tr>
+<td>utm_source</td>
+<td>VARCHAR</td>
+<td>Метки систем статистики</td>
+<td>Платформа</td>
+</tr>
+<tr>
+<td>utm_medium</td>
+<td>VARCHAR</td>
+<td>Метки систем статистики</td>
+<td>Тип трафика</td>
+</tr>
+<tr>
+<td>utm_campaign</td>
+<td>VARCHAR</td>
+<td>Метки систем статистики</td>
+<td>Кампания</td>
+</tr>
+<tr>
+<td>utm_content</td>
+<td>VARCHAR</td>
+<td>Метки систем статистики</td>
+<td>Креатив</td>
+</tr>
+<tr>
+<td>utm_term</td>
+<td>VARCHAR</td>
+<td>Метки систем статистики</td>
+<td>Ключевое слово</td>
+</tr>
+<tr>
+<td>first_touch_source</td>
+<td>VARCHAR</td>
+<td>Расчётное (первый UTM)</td>
+<td>Первый источник</td>
+</tr>
+<tr>
+<td>ym_uid</td>
+<td>VARCHAR</td>
+<td>_ym_uid</td>
+<td>ID посетителя Яндекс.Метрики</td>
+</tr>
+<tr>
+<td>fbclid</td>
+<td>VARCHAR</td>
+<td>fbclid</td>
+<td>Facebook Click ID</td>
+</tr>
+<tr>
+<td>source_tag</td>
+<td>VARCHAR</td>
+<td>Теги на сделке</td>
+<td>Reg.fitbase.io, carrotquest, fb_leadform и др.</td>
+</tr>
+<tr>
+<td>responsible_user_id</td>
+<td>INT</td>
+<td>AmoCRM responsible_user_id</td>
+<td>Ответственный менеджер</td>
+</tr>
+</tbody>
+</table>
+<h4 id="stage_history"><code>stage_history</code> — история переходов по стадиям</h4>
+<p>Источник: AmoCRM API (events / leads/{id}).</p>
+<table>
+<thead>
+<tr>
+<th>Поле</th>
+<th>Тип</th>
+<th>Описание</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>INT</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>lead_id</td>
+<td>INT</td>
+<td>FK → leads</td>
+</tr>
+<tr>
+<td>stage_from</td>
+<td>VARCHAR</td>
+<td>Предыдущая стадия</td>
+</tr>
+<tr>
+<td>stage_to</td>
+<td>VARCHAR</td>
+<td>Новая стадия</td>
+</tr>
+<tr>
+<td>changed_at</td>
+<td>TIMESTAMP</td>
+<td>Дата перехода</td>
+</tr>
+<tr>
+<td>time_in_stage_hours</td>
+<td>FLOAT</td>
+<td>Время на предыдущей стадии (часов)</td>
+</tr>
+</tbody>
+</table>
+<p>Критично для расчёта Pipeline Velocity и когорт.</p>
+<h4 id="accounts"><code>accounts</code> — аккаунты (мультифилиальность)</h4>
+<p>Источник: AmoCRM API (contacts / companies).</p>
+<table>
+<thead>
+<tr>
+<th>Поле</th>
+<th>Тип</th>
+<th>Описание</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>account_id</td>
+<td>INT</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>name</td>
+<td>VARCHAR</td>
+<td>Название компании/контакта</td>
+</tr>
+<tr>
+<td>company_id</td>
+<td>INT</td>
+<td>AmoCRM company.id (если есть)</td>
+</tr>
+<tr>
+<td>total_deals</td>
+<td>INT</td>
+<td>Расчётное: количество сделок</td>
+</tr>
+<tr>
+<td>total_value</td>
+<td>DECIMAL</td>
+<td>Расчётное: сумма всех сделок</td>
+</tr>
+<tr>
+<td>first_deal_date</td>
+<td>TIMESTAMP</td>
+<td>Дата первой сделки</td>
+</tr>
+<tr>
+<td>is_multi_branch</td>
+<td>BOOLEAN</td>
+<td>Расчётное: total_deals &gt; 1</td>
+</tr>
+</tbody>
+</table>
+<h4 id="ad_costs"><code>ad_costs</code> — расходы на рекламу</h4>
+<p>Источник: API рекламных платформ + ручной ввод.</p>
+<table>
+<thead>
+<tr>
+<th>Поле</th>
+<th>Тип</th>
+<th>Описание</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>INT</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>date</td>
+<td>DATE</td>
+<td>Дата</td>
+</tr>
+<tr>
+<td>country</td>
+<td>ENUM</td>
+<td>RF / KZ / UZ</td>
+</tr>
+<tr>
+<td>channel</td>
+<td>VARCHAR</td>
+<td>Канал (yandex, google, meta, vk, telegram, tiktok, youtube, seeding, webinar, partner, smm, email, other)</td>
+</tr>
+<tr>
+<td>campaign_id</td>
+<td>VARCHAR</td>
+<td>ID кампании в платформе</td>
+</tr>
+<tr>
+<td>campaign_name</td>
+<td>VARCHAR</td>
+<td>Название кампании</td>
+</tr>
+<tr>
+<td>creative_id</td>
+<td>VARCHAR</td>
+<td>ID креатива/объявления</td>
+</tr>
+<tr>
+<td>creative_name</td>
+<td>VARCHAR</td>
+<td>Название креатива</td>
+</tr>
+<tr>
+<td>impressions</td>
+<td>INT</td>
+<td>Показы</td>
+</tr>
+<tr>
+<td>clicks</td>
+<td>INT</td>
+<td>Клики</td>
+</tr>
+<tr>
+<td>spend</td>
+<td>DECIMAL</td>
+<td>Расходы, ₽</td>
+</tr>
+<tr>
+<td>platform_conversions</td>
+<td>INT</td>
+<td>Конверсии по данным платформы (для сверки)</td>
+</tr>
+</tbody>
+</table>
+<h4 id="web_sessions-"><code>web_sessions</code> — данные веб-аналитики</h4>
+<p>Источник: Яндекс.Метрика API / Google Analytics.</p>
+<table>
+<thead>
+<tr>
+<th>Поле</th>
+<th>Тип</th>
+<th>Описание</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>INT</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>date</td>
+<td>DATE</td>
+<td>Дата</td>
+</tr>
+<tr>
+<td>domain</td>
+<td>VARCHAR</td>
+<td>fitbase.io / fitbase.tech / fitbase.uz / fitbase.it</td>
+</tr>
+<tr>
+<td>page_path</td>
+<td>VARCHAR</td>
+<td>URL страницы (для SEO-аналитики по статьям)</td>
+</tr>
+<tr>
+<td>utm_source</td>
+<td>VARCHAR</td>
+<td>Источник</td>
+</tr>
+<tr>
+<td>utm_medium</td>
+<td>VARCHAR</td>
+<td>Тип</td>
+</tr>
+<tr>
+<td>utm_campaign</td>
+<td>VARCHAR</td>
+<td>Кампания</td>
+</tr>
+<tr>
+<td>sessions</td>
+<td>INT</td>
+<td>Визиты</td>
+</tr>
+<tr>
+<td>users</td>
+<td>INT</td>
+<td>Уникальные пользователи</td>
+</tr>
+<tr>
+<td>pageviews</td>
+<td>INT</td>
+<td>Просмотры страницы</td>
+</tr>
+<tr>
+<td>goal_completions</td>
+<td>INT</td>
+<td>Достижение целей (заявки, регистрации)</td>
+</tr>
+<tr>
+<td>avg_duration</td>
+<td>FLOAT</td>
+<td>Средняя длительность сессии, сек</td>
+</tr>
+<tr>
+<td>bounce_rate</td>
+<td>FLOAT</td>
+<td>Доля отказов</td>
+</tr>
+</tbody>
+</table>
+<h4 id="bot_sessions-bothelp"><code>bot_sessions</code> — данные BotHelp</h4>
+<p>Источник: BotHelp API.</p>
+<table>
+<thead>
+<tr>
+<th>Поле</th>
+<th>Тип</th>
+<th>Описание</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>INT</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>bot_id</td>
+<td>VARCHAR</td>
+<td>ID бота</td>
+</tr>
+<tr>
+<td>bot_name</td>
+<td>VARCHAR</td>
+<td>Название бота</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>VARCHAR</td>
+<td>ID пользователя в боте</td>
+</tr>
+<tr>
+<td>channel</td>
+<td>ENUM</td>
+<td>telegram / whatsapp</td>
+</tr>
+<tr>
+<td>subscribed_at</td>
+<td>TIMESTAMP</td>
+<td>Дата подписки</td>
+</tr>
+<tr>
+<td>current_step</td>
+<td>VARCHAR</td>
+<td>Текущий шаг воронки бота</td>
+</tr>
+<tr>
+<td>is_lead_created</td>
+<td>BOOLEAN</td>
+<td>Создан ли лид в AmoCRM</td>
+</tr>
+<tr>
+<td>lead_id</td>
+<td>INT</td>
+<td>FK → leads (если создан)</td>
+</tr>
+<tr>
+<td>utm_source</td>
+<td>VARCHAR</td>
+<td>Откуда пришёл в бота</td>
+</tr>
+<tr>
+<td>utm_campaign</td>
+<td>VARCHAR</td>
+<td>Кампания привлечения</td>
+</tr>
+</tbody>
+</table>
+<h4 id="plans"><code>plans</code> — плановые значения</h4>
+<p>Источник: ручной ввод (Google Sheets → ETL).</p>
+<table>
+<thead>
+<tr>
+<th>Поле</th>
+<th>Тип</th>
+<th>Описание</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>INT</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>month</td>
+<td>DATE</td>
+<td>Первое число месяца</td>
+</tr>
+<tr>
+<td>country</td>
+<td>ENUM</td>
+<td>RF / KZ / UZ / ALL</td>
+</tr>
+<tr>
+<td>channel</td>
+<td>VARCHAR</td>
+<td>Канал</td>
+</tr>
+<tr>
+<td>metric</td>
+<td>VARCHAR</td>
+<td>budget / leads / mql / sql / sales / revenue</td>
+</tr>
+<tr>
+<td>plan_value</td>
+<td>DECIMAL</td>
+<td>Плановое значение</td>
+</tr>
+</tbody>
+</table>
+<h3 id="33-views-materialized-views">3.3. Расчётные метрики (views / materialized views)</h3>
+<table>
+<thead>
+<tr>
+<th>Метрика</th>
+<th>Формула</th>
+<th>Уровень</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CPL (Cost per Lead)</td>
+<td>ad_costs.spend / COUNT(leads)</td>
+<td>Канал × период</td>
+</tr>
+<tr>
+<td>CPA_MQL</td>
+<td>ad_costs.spend / COUNT(leads WHERE lead_type='MQL')</td>
+<td>Канал × период</td>
+</tr>
+<tr>
+<td>CPA_SQL</td>
+<td>ad_costs.spend / COUNT(leads WHERE lead_type='SQL')</td>
+<td>Канал × период</td>
+</tr>
+<tr>
+<td>CAC</td>
+<td>ad_costs.spend / COUNT(leads WHERE is_won=true)</td>
+<td>Канал × период</td>
+</tr>
+<tr>
+<td>Revenue per MQL</td>
+<td>SUM(deal_value WHERE is_won) / COUNT(MQL)</td>
+<td>Канал × период</td>
+</tr>
+<tr>
+<td>Pipeline Velocity</td>
+<td>(COUNT(MQL) × CR_won × AVG(deal_value)) / AVG(cycle_days)</td>
+<td>Канал × период</td>
+</tr>
+<tr>
+<td>CR MQL→SQL</td>
+<td>COUNT(SQL) / COUNT(MQL)</td>
+<td>Канал × период</td>
+</tr>
+<tr>
+<td>CR SQL→Won</td>
+<td>COUNT(won) / COUNT(SQL)</td>
+<td>Канал × период</td>
+</tr>
+<tr>
+<td>Median Stage Time</td>
+<td>MEDIAN(time_in_stage_hours)</td>
+<td>Стадия × канал</td>
+</tr>
+<tr>
+<td>Net Revenue per Lead</td>
+<td>SUM(account.total_value) / COUNT(DISTINCT lead_id per account)</td>
+<td>Канал × период</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4-utm-">4. UTM-конвенция</h2>
+<h3 id="41">4.1. Формат</h3>
+<p>Все рекламные ссылки FitBase используют единый формат UTM-разметки. Гео кодируется в <code>utm_campaign</code>, платформа — в <code>utm_source</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Параметр</th>
+<th>Формат</th>
+<th>Правила</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>utm_source</code></td>
+<td>Платформа, lowercase</td>
+<td><code>yandex</code>, <code>google</code>, <code>meta</code>, <code>vk</code>, <code>telegram</code>, <code>tiktok</code>, <code>youtube</code>, <code>seo</code>, <code>smm</code>, <code>seeding</code>, <code>partner</code>, <code>webinar</code>, <code>email</code>, <code>bothelp</code>, <code>direct</code> (прямые обращения)</td>
+</tr>
+<tr>
+<td><code>utm_medium</code></td>
+<td>Тип трафика, lowercase</td>
+<td><code>cpc</code>, <code>cpm</code>, <code>social</code>, <code>organic</code>, <code>seeding</code>, <code>email</code>, <code>referral</code>, <code>bot</code>, <code>event</code>, <code>partner</code></td>
+</tr>
+<tr>
+<td><code>utm_campaign</code></td>
+<td><code>{GEO}_{описание}</code></td>
+<td>Гео: <code>RF</code>, <code>KZ</code>, <code>UZ</code>. Описание: латиница, underscores. Пример: <code>RF_poisk_kommercheskie</code></td>
+</tr>
+<tr>
+<td><code>utm_content</code></td>
+<td>Креатив/объявление</td>
+<td>Уникальный идентификатор креатива. Пример: <code>banner-v2-studio</code>, <code>video-testimonial-01</code></td>
+</tr>
+<tr>
+<td><code>utm_term</code></td>
+<td>Ключевое слово</td>
+<td>Для поисковых кампаний. Пример: <code>crm для фитнес клуба</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="42">4.2. Маппинг каналов</h3>
+<table>
+<thead>
+<tr>
+<th>utm_source</th>
+<th>utm_medium</th>
+<th>Канал в дашборде</th>
+<th>Страна</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>yandex</code></td>
+<td><code>cpc</code></td>
+<td>Яндекс.Директ</td>
+<td>РФ</td>
+</tr>
+<tr>
+<td><code>google</code></td>
+<td><code>cpc</code></td>
+<td>Google Ads</td>
+<td>КЗ, УЗ</td>
+</tr>
+<tr>
+<td><code>meta</code></td>
+<td><code>cpc</code> / <code>cpm</code></td>
+<td>Meta (FB + IG)</td>
+<td>КЗ, УЗ</td>
+</tr>
+<tr>
+<td><code>vk</code></td>
+<td><code>cpc</code> / <code>cpm</code></td>
+<td>ВКонтакте Ads</td>
+<td>РФ</td>
+</tr>
+<tr>
+<td><code>telegram</code></td>
+<td><code>cpc</code></td>
+<td>Telegram Ads</td>
+<td>РФ</td>
+</tr>
+<tr>
+<td><code>tiktok</code></td>
+<td><code>cpc</code> / <code>cpm</code></td>
+<td>TikTok Ads</td>
+<td>КЗ, УЗ</td>
+</tr>
+<tr>
+<td><code>youtube</code></td>
+<td><code>cpc</code> / <code>cpm</code></td>
+<td>YouTube Ads</td>
+<td>КЗ, УЗ</td>
+</tr>
+<tr>
+<td><code>seo</code></td>
+<td><code>organic</code></td>
+<td>SEO / Органика</td>
+<td>Все</td>
+</tr>
+<tr>
+<td><code>smm</code></td>
+<td><code>social</code></td>
+<td>Соцсети (органика)</td>
+<td>Все</td>
+</tr>
+<tr>
+<td><code>seeding</code></td>
+<td><code>seeding</code></td>
+<td>Посевы в Telegram</td>
+<td>РФ</td>
+</tr>
+<tr>
+<td><code>partner</code></td>
+<td><code>referral</code></td>
+<td>Партнёрка</td>
+<td>Все</td>
+</tr>
+<tr>
+<td><code>webinar</code></td>
+<td><code>event</code></td>
+<td>Вебинары</td>
+<td>Все</td>
+</tr>
+<tr>
+<td><code>email</code></td>
+<td><code>email</code></td>
+<td>Email-рассылки</td>
+<td>Все</td>
+</tr>
+<tr>
+<td><code>bothelp</code></td>
+<td><code>bot</code></td>
+<td>BotHelp</td>
+<td>Все</td>
+</tr>
+<tr>
+<td><code>direct</code></td>
+<td><code>none</code></td>
+<td>Прямые обращения</td>
+<td>Все</td>
+</tr>
+</tbody>
+</table>
+<h3 id="43">4.3. Примеры полных ссылок</h3>
+<p><strong>Яндекс.Директ (РФ, поиск, коммерческие):</strong></p>
+<pre><code>https://fitbase.io/?utm_source=yandex&amp;utm_medium=cpc&amp;utm_campaign=RF_poisk_kommercheskie&amp;utm_content=text-ad-v3&amp;utm_term={keyword}
+</code></pre>
+<p><strong>Meta (КЗ, лидформа, студии):</strong></p>
+<pre><code>https://fitbase.tech/?utm_source=meta&amp;utm_medium=cpc&amp;utm_campaign=KZ_leadform_studio&amp;utm_content=video-testimonial-01
+</code></pre>
+<p><strong>Посев в Telegram (РФ):</strong></p>
+<pre><code>https://t.me/fitbase_bot?start=utm_source=seeding&amp;utm_medium=seeding&amp;utm_campaign=RF_fitness_kanal_100k&amp;utm_content=post-2026-03-05
+</code></pre>
+<h3 id="44">4.4. Миграция с текущей разметки</h3>
+<p>Текущее состояние: utm_source используется непоследовательно (примеры: <code>yandex_fitbase</code>, <code>SMM</code>, <code>Bloggers</code>). Необходимо:</p>
+<ol>
+<li>Составить таблицу маппинга старых значений → новые (для исторических данных).</li>
+<li>Обновить UTM во всех активных рекламных кампаниях.</li>
+<li>В ETL-слое реализовать нормализацию: <code>yandex_fitbase</code> → <code>yandex</code>, <code>SMM</code> → <code>smm</code>, <code>Bloggers</code> → <code>seeding</code>.</li>
+</ol>
+<hr />
+<h2 id="5">5. Интеграции</h2>
+<h3 id="51-amocrm-api">5.1. AmoCRM API</h3>
+<p><strong>Роль:</strong> Центральный источник данных о лидах, сделках, воронках.</p>
+<table>
+<thead>
+<tr>
+<th>Параметр</th>
+<th>Значение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API версия</td>
+<td>v4</td>
+</tr>
+<tr>
+<td>Авторизация</td>
+<td>OAuth 2.0 (токен уже есть, MCP-подключение работает)</td>
+</tr>
+<tr>
+<td>Частота синхронизации</td>
+<td>Webhook (мгновенно) + полная синхронизация 1 раз/час</td>
+</tr>
+<tr>
+<td>Существующий код</td>
+<td><code>amocrm-analytics/etl/sync.py</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Данные для выгрузки:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Эндпоинт</th>
+<th>Данные</th>
+<th>Поля</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/api/v4/leads</code></td>
+<td>Сделки</td>
+<td>id, name, price (Бюджет), status_id, pipeline_id, created_at, closed_at, loss_reason, custom_fields (Тип заявки, UTM), tags, responsible_user_id</td>
+</tr>
+<tr>
+<td><code>/api/v4/leads/{id}</code></td>
+<td>Детали сделки</td>
+<td>То же + embedded contacts</td>
+</tr>
+<tr>
+<td><code>/api/v4/contacts</code></td>
+<td>Контакты</td>
+<td>id, name, company_id, custom_fields (телефон, email)</td>
+</tr>
+<tr>
+<td><code>/api/v4/companies</code></td>
+<td>Компании</td>
+<td>id, name</td>
+</tr>
+<tr>
+<td><code>/api/v4/events</code></td>
+<td>История событий</td>
+<td>lead_id, type (lead_status_changed), created_at, value_before, value_after</td>
+</tr>
+<tr>
+<td><code>/api/v4/leads/pipelines</code></td>
+<td>Воронки и стадии</td>
+<td>pipeline_id, statuses (id, name, sort)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Webhook-события:</strong>
+- <code>leads.status</code> — смена стадии → обновление stage_history
+- <code>leads.add</code> — новый лид → вставка в leads
+- <code>leads.update</code> — обновление полей → обновление leads</p>
+<h3 id="52-api">5.2. Яндекс.Директ API</h3>
+<p><strong>Роль:</strong> Расходы, показы, клики, конверсии по кампаниям и объявлениям (РФ).</p>
+<table>
+<thead>
+<tr>
+<th>Параметр</th>
+<th>Значение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API версия</td>
+<td>v5</td>
+</tr>
+<tr>
+<td>Авторизация</td>
+<td>OAuth-токен</td>
+</tr>
+<tr>
+<td>Частота</td>
+<td>1 раз/день (06:00 МСК)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Отчёт:</strong> <code>CUSTOM_REPORT</code> с полями:
+- <code>Date</code>, <code>CampaignId</code>, <code>CampaignName</code>, <code>AdGroupId</code>, <code>AdGroupName</code>, <code>AdId</code>
+- <code>Impressions</code>, <code>Clicks</code>, <code>Cost</code> (в у.е., конвертировать в ₽)
+- <code>Conversions</code> (для сверки с CRM)</p>
+<h3 id="53-google-ads-api">5.3. Google Ads API</h3>
+<p><strong>Роль:</strong> Расходы, показы, клики по кампаниям (КЗ, УЗ).</p>
+<table>
+<thead>
+<tr>
+<th>Параметр</th>
+<th>Значение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API версия</td>
+<td>v17+</td>
+</tr>
+<tr>
+<td>Авторизация</td>
+<td>OAuth 2.0</td>
+</tr>
+<tr>
+<td>Частота</td>
+<td>1 раз/день (06:00 МСК)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Отчёт:</strong> <code>campaign</code>, <code>ad_group</code>, <code>ad</code> ресурсы с метриками:
+- <code>segments.date</code>, <code>campaign.id</code>, <code>campaign.name</code>, <code>ad_group.id</code>, <code>ad.id</code>
+- <code>metrics.impressions</code>, <code>metrics.clicks</code>, <code>metrics.cost_micros</code>
+- <code>metrics.conversions</code></p>
+<h3 id="54-meta-marketing-api">5.4. Meta Marketing API</h3>
+<p><strong>Роль:</strong> Расходы, показы, клики по кампаниям и креативам (КЗ, УЗ).</p>
+<table>
+<thead>
+<tr>
+<th>Параметр</th>
+<th>Значение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API версия</td>
+<td>v19.0+</td>
+</tr>
+<tr>
+<td>Авторизация</td>
+<td>Access Token (Business Manager)</td>
+</tr>
+<tr>
+<td>Частота</td>
+<td>1 раз/день</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Эндпоинт:</strong> <code>/{ad_account_id}/insights</code> с breakdowns:
+- <code>date_start</code>, <code>campaign_id</code>, <code>campaign_name</code>, <code>adset_id</code>, <code>adset_name</code>, <code>ad_id</code>, <code>ad_name</code>
+- <code>impressions</code>, <code>clicks</code>, <code>spend</code>
+- <code>actions</code> (leads, conversions)
+- Отдельно: <code>/ads/{ad_id}</code> для получения creative (image_url, video_url) — для карточек креативов на дашборде</p>
+<h3 id="55-vk-ads-api">5.5. VK Ads API</h3>
+<p><strong>Роль:</strong> Расходы, показы, клики (РФ).</p>
+<table>
+<thead>
+<tr>
+<th>Параметр</th>
+<th>Значение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API</td>
+<td>VK Ads API</td>
+</tr>
+<tr>
+<td>Авторизация</td>
+<td>Access Token</td>
+</tr>
+<tr>
+<td>Частота</td>
+<td>1 раз/день</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Данные:</strong> campaigns, ads → statistics (date, impressions, clicks, spent).</p>
+<h3 id="56-telegram-ads">5.6. Telegram Ads</h3>
+<p><strong>Роль:</strong> Расходы, показы, клики (РФ).</p>
+<table>
+<thead>
+<tr>
+<th>Параметр</th>
+<th>Значение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API</td>
+<td>Telegram Ad Platform (или ручной экспорт)</td>
+</tr>
+<tr>
+<td>Частота</td>
+<td>1 раз/день</td>
+</tr>
+</tbody>
+</table>
+<p>Telegram Ads пока не имеет полноценного API для всех рекламодателей. Если API недоступен — ручной экспорт CSV из кабинета → загрузка в Google Sheets → ETL.</p>
+<h3 id="57-tiktok-ads-api">5.7. TikTok Ads API (планируется)</h3>
+<table>
+<thead>
+<tr>
+<th>Параметр</th>
+<th>Значение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API</td>
+<td>TikTok Marketing API</td>
+</tr>
+<tr>
+<td>Авторизация</td>
+<td>Access Token</td>
+</tr>
+<tr>
+<td>Частота</td>
+<td>1 раз/день</td>
+</tr>
+</tbody>
+</table>
+<p>Подключение при запуске канала в КЗ/УЗ.</p>
+<h3 id="58-youtube-ads">5.8. YouTube Ads (планируется)</h3>
+<p>Данные через Google Ads API (YouTube-кампании отдельным сегментом).</p>
+<h3 id="59-api">5.9. Яндекс.Метрика API</h3>
+<p><strong>Роль:</strong> Веб-аналитика — трафик, поведение, конверсии по страницам и источникам.</p>
+<table>
+<thead>
+<tr>
+<th>Параметр</th>
+<th>Значение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API</td>
+<td>Reporting API</td>
+</tr>
+<tr>
+<td>Авторизация</td>
+<td>OAuth-токен</td>
+</tr>
+<tr>
+<td>Частота</td>
+<td>1 раз/день (07:00 МСК)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Отчёты:</strong></p>
+<ol>
+<li><strong>По источникам:</strong> dimensions = <code>ym:s:UTMSource, ym:s:UTMMedium, ym:s:UTMCampaign</code>; metrics = <code>ym:s:visits, ym:s:users, ym:s:goalXconversions</code>.</li>
+<li><strong>По страницам (для SEO):</strong> dimensions = <code>ym:s:startURLPath</code>; metrics = <code>ym:s:visits, ym:s:users, ym:s:goalXconversions, ym:s:bounceRate, ym:s:avgVisitDurationSeconds</code>.</li>
+<li><strong>По дням:</strong> dimensions = <code>ym:s:date</code> + вышеуказанные разрезы.</li>
+</ol>
+<p>Нужны отдельные счётчики (или фильтры) для каждого домена: fitbase.io, fitbase.tech, fitbase.uz, fitbase.it.</p>
+<h3 id="510-google-analytics-data-api">5.10. Google Analytics Data API (КЗ, УЗ)</h3>
+<table>
+<thead>
+<tr>
+<th>Параметр</th>
+<th>Значение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API</td>
+<td>Google Analytics Data API v1</td>
+</tr>
+<tr>
+<td>Авторизация</td>
+<td>Service Account</td>
+</tr>
+<tr>
+<td>Частота</td>
+<td>1 раз/день</td>
+</tr>
+</tbody>
+</table>
+<p>Аналогичные отчёты, что и Метрика. Подключается при установке GA на fitbase.tech и fitbase.uz.</p>
+<h3 id="511-bothelp-api">5.11. BotHelp API</h3>
+<p><strong>Роль:</strong> Данные воронок ботов (посевы, вебинары).</p>
+<table>
+<thead>
+<tr>
+<th>Параметр</th>
+<th>Значение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API</td>
+<td>BotHelp REST API</td>
+</tr>
+<tr>
+<td>Частота</td>
+<td>1 раз/день</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Данные:</strong> подписчики (user_id, channel, subscribed_at, utm-параметры), шаги воронки (step_name, completed_at), связка с лидом AmoCRM (если передаётся телефон/email).</p>
+<h3 id="512-ip-">5.12. IP-телефония</h3>
+<p><strong>Роль:</strong> Входящие/исходящие звонки, привязка к лидам.</p>
+<p>Интеграция уже существует через AmoCRM (звонки отображаются в карточке сделки). Дополнительная прямая интеграция — опционально.</p>
+<h3 id="513-google-sheets">5.13. Ручной ввод (Google Sheets)</h3>
+<p><strong>Роль:</strong> Данные, которые невозможно или нецелесообразно забирать через API.</p>
+<table>
+<thead>
+<tr>
+<th>Тип данных</th>
+<th>Кто заполняет</th>
+<th>Частота</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Расходы на посевы</td>
+<td>Маркетолог</td>
+<td>После каждого размещения</td>
+</tr>
+<tr>
+<td>Расходы на ивенты/вебинары</td>
+<td>Маркетолог</td>
+<td>После мероприятия</td>
+</tr>
+<tr>
+<td>Партнёрские расходы</td>
+<td>Маркетолог</td>
+<td>Ежемесячно</td>
+</tr>
+<tr>
+<td>Плановые значения (plans)</td>
+<td>Руководитель</td>
+<td>До начала месяца</td>
+</tr>
+<tr>
+<td>Расходы на SMM (если нет API)</td>
+<td>SMM-менеджер</td>
+<td>Еженедельно</td>
+</tr>
+</tbody>
+</table>
+<p>Формат: Google Sheets с фиксированной структурой → ETL забирает через Google Sheets API.</p>
+<hr />
+<h2 id="6">6. Спецификация дашбордов</h2>
+<h3 id="_2">Общие принципы</h3>
+<ul>
+<li><strong>Дизайн-референс:</strong> Elly Analytics B2B Dashboard (тёмная тема, чистые карточки, спарклайны). Подробный разбор: <a href="../References/Elly_B2B_Dashboard.md">References/Elly_B2B_Dashboard.md</a></li>
+<li><strong>НЕ как:</strong> текущие дашборды FitbaseLab (стандартный DataLens look)</li>
+<li><strong>Фильтры-по-умолчанию:</strong> текущий месяц, все страны, все каналы</li>
+<li><strong>Сравнение:</strong> всегда показывать текущий период vs предыдущий (Δ и %)</li>
+<li><strong>Обновление данных:</strong> AmoCRM — до 1 часа; расходы — до 1 дня; Метрика/GA — до 1 дня</li>
+</ul>
+<hr />
+<h3 id="1-executive-overview-ceo">Дашборд 1: Executive Overview (CEO)</h3>
+<p><strong>Назначение:</strong> Один экран — здоровье маркетинга за 30 секунд.
+<strong>Аудитория:</strong> CEO, руководитель маркетинга.
+<strong>Частота просмотра:</strong> Еженедельно (CEO), ежедневно (маркетинг).</p>
+<p><strong>Верхняя полоса — 6 карточек KPI:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Карточка</th>
+<th>Метрика</th>
+<th>Формат</th>
+<th>Сравнение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>MQL за период</td>
+<td>Число + спарклайн</td>
+<td>vs план (%), vs пред. период (Δ)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Продажи (оплаты)</td>
+<td>Число + спарклайн</td>
+<td>vs план (%), vs пред. период (Δ)</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Выручка (сумма won deals)</td>
+<td>₽ + спарклайн</td>
+<td>vs план (%), vs пред. период (Δ)</td>
+</tr>
+<tr>
+<td>4</td>
+<td>CAC</td>
+<td>₽</td>
+<td>vs пред. период (Δ)</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Pipeline Coverage</td>
+<td>Ratio (сумма в работе / план оплат)</td>
+<td>Норма: ≥ 3x</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Бюджет (расходы)</td>
+<td>₽ + спарклайн</td>
+<td>vs план (%)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Средний блок:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Элемент</th>
+<th>Тип визуализации</th>
+<th>Описание</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Воронка</td>
+<td>Горизонтальный bar chart</td>
+<td>Лиды → MQL → SQL → Оплата (абсолютные числа + CR между шагами)</td>
+</tr>
+<tr>
+<td>Revenue per MQL</td>
+<td>Число</td>
+<td>По странам (РФ / КЗ / УЗ)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Нижний блок — таблица по странам:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Страна</th>
+<th>Бюджет</th>
+<th>Лиды</th>
+<th>MQL</th>
+<th>SQL</th>
+<th>Оплаты</th>
+<th>Выручка</th>
+<th>CAC</th>
+<th>CR MQL→Won</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>РФ</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+<tr>
+<td>КЗ</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+<tr>
+<td>УЗ</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+<tr>
+<td><strong>Итого</strong></td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Фильтры:</strong> Период (месяц/квартал/год).</p>
+<hr />
+<h3 id="2-operational-pulse">Дашборд 2: Operational Pulse (Ежедневный)</h3>
+<p><strong>Назначение:</strong> Утренний чек: что произошло вчера, что горит сегодня.
+<strong>Аудитория:</strong> Руководитель маркетинга, команда.
+<strong>Частота просмотра:</strong> Ежедневно (в 10:00 + Telegram-алерт).</p>
+<p><strong>Верхняя полоса — оперативные карточки:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Карточка</th>
+<th>Метрика</th>
+<th>Период</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Новых лидов сегодня</td>
+<td>Сегодня</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Новых лидов за 7 дней (rolling)</td>
+<td>7 дней</td>
+</tr>
+<tr>
+<td>3</td>
+<td>MQL за 7 дней</td>
+<td>7 дней</td>
+</tr>
+<tr>
+<td>4</td>
+<td>CR в MQL (7-day rolling)</td>
+<td>7 дней</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Оплат за текущий месяц vs план</td>
+<td>MTD</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Расходов за текущий месяц vs план</td>
+<td>MTD</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Блок алертов (красные карточки, если &gt; 0):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Алерт</th>
+<th>Условие</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Лиды без обработки &gt; 24ч</td>
+<td>stage = «Новый лид» AND created_at &lt; NOW() - 24h</td>
+</tr>
+<tr>
+<td>Лиды застряли на стадии &gt; 7 дней</td>
+<td>time_in_stage &gt; 7 дней AND stage NOT IN (Заморозка, Won, Lost)</td>
+</tr>
+<tr>
+<td>Бюджет &gt; 110% плана на дату</td>
+<td>cumulative_spend &gt; cumulative_plan * 1.1</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Тепловая карта лидов:</strong> Дни недели × часы (0–23) — количество новых лидов. Помогает видеть оптимальное время для рекламы и обработки.</p>
+<p><strong>Таблица «вчера по каналам»:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Канал</th>
+<th>Лиды</th>
+<th>MQL</th>
+<th>Расходы</th>
+<th>CPL</th>
+<th>Примечание</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Фильтры:</strong> Страна, период (по умолчанию — сегодня / вчера).</p>
+<hr />
+<h3 id="3-full-funnel-waterfall">Дашборд 3: Full Funnel Waterfall</h3>
+<p><strong>Назначение:</strong> Полная воронка конверсий — где теряются лиды.
+<strong>Аудитория:</strong> Руководитель маркетинга, CEO.</p>
+<p><strong>Основная визуализация — waterfall chart:</strong></p>
+<pre><code>Все лиды (1000) → В обработке (800, 80%) → MQL (300, 30%) → Встреча (180, 18%) → SQL (90, 9%) → КП (60, 6%) → Оплата (45, 4.5%)
+</code></pre>
+<p>Каждый шаг: абсолютное число + CR от предыдущего шага + CR от всех лидов.</p>
+<p><strong>Таблица — воронка по каналам:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Канал</th>
+<th>Лиды</th>
+<th>→ В обработке</th>
+<th>→ MQL</th>
+<th>CR→MQL</th>
+<th>→ Встреча</th>
+<th>→ SQL</th>
+<th>CR→SQL</th>
+<th>→ Оплата</th>
+<th>CR→Won</th>
+<th>Выручка</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Яндекс.Директ</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+<tr>
+<td>Google Ads</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+<tr>
+<td>Meta</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+<tr>
+<td>SEO</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+<tr>
+<td>Посевы</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+<tr>
+<td>Email</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+<tr>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Сравнение:</strong> текущий период vs предыдущий (Δ CR на каждом шаге).</p>
+<p><strong>Фильтры:</strong> Страна, канал, период. По умолчанию: текущий месяц, все.</p>
+<hr />
+<h3 id="4-channel-performance">Дашборд 4: Channel Performance</h3>
+<p><strong>Назначение:</strong> Эффективность каждого канала — от расходов до выручки.
+<strong>Аудитория:</strong> Руководитель маркетинга, маркетологи по каналам.</p>
+<p><strong>Основная таблица (раскрывающееся дерево: канал → кампания → креатив):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Метрика</th>
+<th>Описание</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Spend</td>
+<td>Расходы, ₽</td>
+</tr>
+<tr>
+<td>Impressions</td>
+<td>Показы</td>
+</tr>
+<tr>
+<td>Clicks</td>
+<td>Клики</td>
+</tr>
+<tr>
+<td>CTR</td>
+<td>Clicks / Impressions</td>
+</tr>
+<tr>
+<td>CPC</td>
+<td>Spend / Clicks</td>
+</tr>
+<tr>
+<td>Leads</td>
+<td>Лиды в AmoCRM</td>
+</tr>
+<tr>
+<td>CPL</td>
+<td>Spend / Leads</td>
+</tr>
+<tr>
+<td>MQL</td>
+<td>Целевые лиды</td>
+</tr>
+<tr>
+<td>CPA_MQL</td>
+<td>Spend / MQL</td>
+</tr>
+<tr>
+<td>CR Leads→MQL</td>
+<td>MQL / Leads</td>
+</tr>
+<tr>
+<td>SQL</td>
+<td>Sales Qualified</td>
+</tr>
+<tr>
+<td>CPA_SQL</td>
+<td>Spend / SQL</td>
+</tr>
+<tr>
+<td>CR MQL→SQL</td>
+<td>SQL / MQL</td>
+</tr>
+<tr>
+<td>Won</td>
+<td>Оплаты</td>
+</tr>
+<tr>
+<td>CAC</td>
+<td>Spend / Won</td>
+</tr>
+<tr>
+<td>CR SQL→Won</td>
+<td>Won / SQL</td>
+</tr>
+<tr>
+<td>Revenue</td>
+<td>Выручка (сумма deal_value)</td>
+</tr>
+<tr>
+<td>ROAS</td>
+<td>Revenue / Spend</td>
+</tr>
+<tr>
+<td>Revenue per MQL</td>
+<td>Revenue / MQL</td>
+</tr>
+<tr>
+<td>Pipeline Velocity</td>
+<td>(MQL × CR_won × AVG_deal) / AVG_cycle_days</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Графики:</strong>
+- Bubble chart: каналы (X = CPL, Y = CR→Won, размер = количество лидов)
+- Bar chart: Revenue per MQL по каналам</p>
+<p><strong>Фильтры:</strong> Страна, период, канал (для drill-down в кампании/креативы).</p>
+<hr />
+<h3 id="5-planfact-variance">Дашборд 5: Plan/Fact (Variance)</h3>
+<p><strong>Назначение:</strong> Контроль выполнения плана — по каналам и странам.
+<strong>Аудитория:</strong> Руководитель маркетинга, CEO.
+<strong>Референс:</strong> таблица TripleTen (References/Marketing_PlanFact_Sheet.md) + Elly Variance page.</p>
+<p><strong>Таблица (строки = каналы, три строки на канал: план / факт / %):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Месяц</th>
+<th>P/F/%</th>
+<th>Канал</th>
+<th>Бюджет</th>
+<th>Лиды</th>
+<th>MQL</th>
+<th>SQL</th>
+<th>Оплаты</th>
+<th>Выручка</th>
+<th>CPL</th>
+<th>CAC</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>03/2026</td>
+<td>Plan</td>
+<td>Яндекс.Директ</td>
+<td>400 000</td>
+<td>200</td>
+<td>60</td>
+<td>30</td>
+<td>15</td>
+<td>1.5M</td>
+<td>2 000</td>
+<td>26 667</td>
+</tr>
+<tr>
+<td>03/2026</td>
+<td>Fact</td>
+<td>Яндекс.Директ</td>
+<td>380 000</td>
+<td>180</td>
+<td>55</td>
+<td>25</td>
+<td>12</td>
+<td>1.2M</td>
+<td>2 111</td>
+<td>31 667</td>
+</tr>
+<tr>
+<td>03/2026</td>
+<td>%</td>
+<td>Яндекс.Директ</td>
+<td>95%</td>
+<td>90%</td>
+<td>92%</td>
+<td>83%</td>
+<td>80%</td>
+<td>80%</td>
+<td>106%</td>
+<td>119%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Цветовая кодировка:</strong>
+- Зелёный: ≥100% (для метрик «больше = лучше»: лиды, MQL, выручка)
+- Красный: &lt;90%
+- Жёлтый: 90–99%
+- Инвертировано для расходов и стоимостных метрик (CPL, CAC): зелёный = ≤100%</p>
+<p><strong>Колонка «Прогноз»:</strong> экстраполяция текущего темпа (7-day rolling) на конец месяца.</p>
+<p><strong>Графики:</strong>
+- Bar chart: план vs факт по каналам (текущий месяц)
+- Line chart: кумулятивное выполнение плана по дням (факт vs план)</p>
+<p><strong>Фильтры:</strong> Страна, месяц, канал.</p>
+<hr />
+<h3 id="6-lead-cohorts">Дашборд 6: Lead Cohorts</h3>
+<p><strong>Назначение:</strong> Как быстро конвертируются лиды из каждой когорты и канала.
+<strong>Аудитория:</strong> Руководитель маркетинга.</p>
+<p><strong>Основная таблица (когортная матрица):</strong></p>
+<p>Строки = недельные или месячные когорты (по дате created_at в AmoCRM).
+Столбцы = Week 0, Week 1, Week 2, ..., Week 8 (время с момента входа).
+Значения = количество оплат (Won) ИЛИ сумма выручки (переключатель).</p>
+<table>
+<thead>
+<tr>
+<th>Когорта</th>
+<th>Лидов</th>
+<th>Week 0</th>
+<th>Week 1</th>
+<th>Week 2</th>
+<th>Week 3</th>
+<th>Week 4</th>
+<th>Total Won</th>
+<th>CR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>01–07 янв</td>
+<td>250</td>
+<td>2</td>
+<td>5</td>
+<td>8</td>
+<td>10</td>
+<td>7</td>
+<td>32</td>
+<td>12.8%</td>
+</tr>
+<tr>
+<td>08–14 янв</td>
+<td>230</td>
+<td>3</td>
+<td>4</td>
+<td>9</td>
+<td>11</td>
+<td>—</td>
+<td>27</td>
+<td>11.7%</td>
+</tr>
+<tr>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Тепловая карта:</strong> цветовая кодировка ячеек (больше конверсий = насыщеннее цвет).</p>
+<p><strong>Переключатели:</strong> Значение (количество / выручка), группировка (неделя / месяц).</p>
+<p><strong>Фильтры:</strong> Страна, канал. При фильтре по каналу — видно, как именно «раскрывается» когорта из этого канала.</p>
+<hr />
+<h3 id="7-forecast">Дашборд 7: Forecast</h3>
+<p><strong>Назначение:</strong> Прогноз оплат и выручки на текущий и следующий месяц.
+<strong>Аудитория:</strong> Руководитель маркетинга, CEO.</p>
+<p><strong>Три блока прогноза:</strong></p>
+<p><strong>7.1. Pipeline-based (горизонт 1–2 недели, высокая точность):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Стадия</th>
+<th>Сделок</th>
+<th>Сумма</th>
+<th>Историч. CR</th>
+<th>Прогноз оплат</th>
+<th>Прогноз выручки</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Встреча назначена</td>
+<td>25</td>
+<td>1.4M</td>
+<td>60%</td>
+<td>15</td>
+<td>840K</td>
+</tr>
+<tr>
+<td>Встреча / КП</td>
+<td>81</td>
+<td>9.9M</td>
+<td>45%</td>
+<td>36</td>
+<td>4.5M</td>
+</tr>
+<tr>
+<td>Возражения</td>
+<td>8</td>
+<td>4.2M</td>
+<td>70%</td>
+<td>6</td>
+<td>2.9M</td>
+</tr>
+<tr>
+<td>Ожидаем оплаты</td>
+<td>11</td>
+<td>1.1M</td>
+<td>90%</td>
+<td>10</td>
+<td>1.0M</td>
+</tr>
+<tr>
+<td><strong>Итого</strong></td>
+<td><strong>125</strong></td>
+<td><strong>16.6M</strong></td>
+<td></td>
+<td><strong>67</strong></td>
+<td><strong>9.2M</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>7.2. Cohort-based (горизонт 30–45 дней, средняя точность):</strong></p>
+<p>Для лидов текущего месяца: количество × историческая CR когорты того же «возраста» по тому же каналу.</p>
+<p><strong>7.3. Trend-based (грубый, для алертов):</strong></p>
+<p>Текущий темп (оплат за последние 7 дней, annualized) × оставшихся дней в месяце.</p>
+<p><strong>Визуализация:</strong>
+- Gauge chart: прогноз vs план (% выполнения)
+- Таблица: прогноз по каналам</p>
+<p><strong>Фильтры:</strong> Страна, канал.</p>
+<p>Подробная методология: <a href="#7-методология-прогноза">Раздел 7</a>.</p>
+<hr />
+<h3 id="8-seo-content">Дашборд 8: SEO / Content</h3>
+<p><strong>Назначение:</strong> Эффективность каждой страницы и статьи — трафик, лиды, конверсии.
+<strong>Аудитория:</strong> Руководитель маркетинга, SEO-специалист.</p>
+<p><strong>Таблица по страницам:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Домен</th>
+<th>Страница / Статья</th>
+<th>Визиты</th>
+<th>Уники</th>
+<th>Заявки (цели)</th>
+<th>CR</th>
+<th>MQL (из AmoCRM)</th>
+<th>Δ визитов vs пред. период</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>fitbase.io</td>
+<td>/blog/crm-dlya-fitnesa</td>
+<td>1 200</td>
+<td>900</td>
+<td>15</td>
+<td>1.25%</td>
+<td>5</td>
+<td>+12%</td>
+</tr>
+<tr>
+<td>fitbase.io</td>
+<td>/tarify</td>
+<td>3 500</td>
+<td>2 800</td>
+<td>80</td>
+<td>2.29%</td>
+<td>30</td>
+<td>−3%</td>
+</tr>
+<tr>
+<td>fitbase.tech</td>
+<td>/</td>
+<td>2 000</td>
+<td>1 500</td>
+<td>25</td>
+<td>1.25%</td>
+<td>10</td>
+<td>+20%</td>
+</tr>
+<tr>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+</tbody>
+</table>
+<p><strong>График динамики статьи:</strong> Line chart — выбранная статья, визиты + заявки по неделям.</p>
+<p><strong>Фильтры:</strong> Домен, период, минимальный порог визитов (чтобы отфильтровать мусор).</p>
+<p><strong>Связка с AmoCRM:</strong> через utm_source=seo + utm_content=page_path (или через _ym_uid, если есть матчинг).</p>
+<hr />
+<h3 id="9-campaigns-creatives">Дашборд 9: Campaigns &amp; Creatives</h3>
+<p><strong>Назначение:</strong> Визуальный обзор креативов с метриками — какие объявления работают.
+<strong>Аудитория:</strong> Маркетологи по каналам, руководитель маркетинга.
+<strong>Референс:</strong> Elly Analytics — FB Creatives page (карточки с превью).</p>
+<p><strong>Карточки креативов (grid layout):</strong></p>
+<p>Каждая карточка содержит:
+- Превью креатива (изображение/видео — из Meta/VK API)
+- Канал + кампания + название
+- Ad Spend
+- Leads / MQL
+- CPL / CPA_MQL
+- CR → MQL
+- ROAS (если применимо)</p>
+<p><strong>Сортировка:</strong> по расходам (top), по CPA_MQL (best), по количеству MQL (top).</p>
+<p><strong>Детальный вид (drill-down по клику на карточку):</strong>
+- Ежедневная динамика: spend, leads, MQL (line chart)
+- Таблица по дням: все метрики</p>
+<p><strong>Фильтры:</strong> Канал, страна, период, кампания.</p>
+<hr />
+<h3 id="10-pipeline-velocity">Дашборд 10: Pipeline &amp; Velocity</h3>
+<p><strong>Назначение:</strong> Текущее состояние воронки, скорость прохождения, узкие места.
+<strong>Аудитория:</strong> Руководитель маркетинга, CEO.</p>
+<p><strong>Блок 1: Текущий пайплайн</strong></p>
+<table>
+<thead>
+<tr>
+<th>Стадия</th>
+<th>Сделок</th>
+<th>Сумма</th>
+<th>Среднее время на стадии (дн.)</th>
+<th>Медиана</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Новый лид</td>
+<td>0</td>
+<td>0</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>В обработке</td>
+<td>205</td>
+<td>367K</td>
+<td>2.3</td>
+<td>1.5</td>
+</tr>
+<tr>
+<td>Квалифицирован (MQL)</td>
+<td>51</td>
+<td>1.1M</td>
+<td>5.1</td>
+<td>3.0</td>
+</tr>
+<tr>
+<td>Встреча назначена</td>
+<td>25</td>
+<td>1.4M</td>
+<td>3.2</td>
+<td>2.0</td>
+</tr>
+<tr>
+<td>Встреча / КП (SQL)</td>
+<td>81</td>
+<td>9.9M</td>
+<td>8.5</td>
+<td>6.0</td>
+</tr>
+<tr>
+<td>Возражения</td>
+<td>8</td>
+<td>4.2M</td>
+<td>12.0</td>
+<td>10.0</td>
+</tr>
+<tr>
+<td>Ожидаем оплаты</td>
+<td>11</td>
+<td>1.1M</td>
+<td>4.0</td>
+<td>3.0</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Блок 2: Pipeline Velocity по каналам</strong></p>
+<table>
+<thead>
+<tr>
+<th>Канал</th>
+<th>MQL/мес</th>
+<th>CR→Won</th>
+<th>Avg Deal</th>
+<th>Avg Cycle (дн.)</th>
+<th>Velocity (₽/день)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Яндекс.Директ</td>
+<td>60</td>
+<td>15%</td>
+<td>95K</td>
+<td>28</td>
+<td>30 536</td>
+</tr>
+<tr>
+<td>Google Ads</td>
+<td>40</td>
+<td>18%</td>
+<td>110K</td>
+<td>25</td>
+<td>31 680</td>
+</tr>
+<tr>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+</tbody>
+</table>
+<p>Формула: Velocity = (MQL × CR × Avg Deal) / Avg Cycle Days</p>
+<p><strong>Блок 3: Bottleneck Analysis</strong></p>
+<p>Bar chart: медианное время на каждой стадии. Подсвечивается стадия с наибольшим временем.</p>
+<p><strong>Блок 4: Account-Level View (мультифилиальность)</strong></p>
+<table>
+<thead>
+<tr>
+<th>Account</th>
+<th>Первая сделка</th>
+<th>Всего сделок</th>
+<th>Total Value</th>
+<th>Expansion?</th>
+<th>Источник первой сделки</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Сеть X</td>
+<td>2025-08-15</td>
+<td>4</td>
+<td>400K</td>
+<td>Да (+3)</td>
+<td>meta / KZ_leadform</td>
+</tr>
+<tr>
+<td>Студия Y</td>
+<td>2025-11-01</td>
+<td>1</td>
+<td>100K</td>
+<td>Нет</td>
+<td>yandex / RF_poisk</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Метрика Expansion Revenue:</strong> SUM(deal_value) для аккаунтов с total_deals &gt; 1, исключая первую сделку.</p>
+<p><strong>Фильтры:</strong> Страна, канал, период, стадия.</p>
+<hr />
+<h3 id="phase-2">Дополнительные модули (Phase 2+)</h3>
+<h4 id="a">Модуль A: Вебинарная воронка</h4>
+<table>
+<thead>
+<tr>
+<th>Шаг</th>
+<th>Метрика</th>
+<th>Источник</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Регистрация</td>
+<td>Количество</td>
+<td>BotHelp / Tilda form</td>
+</tr>
+<tr>
+<td>Участие (пришли)</td>
+<td>Количество</td>
+<td>Вебинарная платформа / BotHelp</td>
+</tr>
+<tr>
+<td>Досмотр (&gt;15 мин)</td>
+<td>Количество</td>
+<td>Вебинарная платформа</td>
+</tr>
+<tr>
+<td>MQL</td>
+<td>Количество</td>
+<td>AmoCRM (воронка «Вебинары»)</td>
+</tr>
+<tr>
+<td>SQL</td>
+<td>Количество</td>
+<td>AmoCRM</td>
+</tr>
+<tr>
+<td>Оплата</td>
+<td>Количество</td>
+<td>AmoCRM</td>
+</tr>
+</tbody>
+</table>
+<p>Разрез: по вебинару, по каналу привлечения на вебинар.</p>
+<h4 id="b-bothelp-">Модуль B: BotHelp-воронка</h4>
+<table>
+<thead>
+<tr>
+<th>Шаг</th>
+<th>Метрика</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Подписка на бота</td>
+<td>Количество + utm-источник</td>
+</tr>
+<tr>
+<td>Шаг 1 (приветствие)</td>
+<td>Прошли</td>
+</tr>
+<tr>
+<td>Шаг 2 (квиз/вопросы)</td>
+<td>Прошли</td>
+</tr>
+<tr>
+<td>Шаг N (CTA / заявка)</td>
+<td>Прошли</td>
+</tr>
+<tr>
+<td>Лид создан в AmoCRM</td>
+<td>Количество</td>
+</tr>
+<tr>
+<td>MQL</td>
+<td>Количество</td>
+</tr>
+<tr>
+<td>Оплата</td>
+<td>Количество</td>
+</tr>
+</tbody>
+</table>
+<h4 id="c">Модуль C: Посевы</h4>
+<table>
+<thead>
+<tr>
+<th>Метрика</th>
+<th>Описание</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Площадка</td>
+<td>Telegram-канал / блогер</td>
+</tr>
+<tr>
+<td>Расходы</td>
+<td>Оплата за пост</td>
+</tr>
+<tr>
+<td>Охват</td>
+<td>Просмотры поста</td>
+</tr>
+<tr>
+<td>Переходы</td>
+<td>Клики по ссылке</td>
+</tr>
+<tr>
+<td>Подписки (бот)</td>
+<td>Из BotHelp</td>
+</tr>
+<tr>
+<td>Лиды</td>
+<td>Из AmoCRM</td>
+</tr>
+<tr>
+<td>MQL</td>
+<td>Целевые</td>
+</tr>
+<tr>
+<td>Оплаты</td>
+<td>Won</td>
+</tr>
+<tr>
+<td>ROAS</td>
+<td>Revenue / Spend</td>
+</tr>
+</tbody>
+</table>
+<h4 id="d-smm">Модуль D: SMM (органика)</h4>
+<p>По каждому каналу (Instagram, Telegram, VK, YouTube):
+- Подписчики (начало / конец периода / прирост / отток)
+- Охваты (посты / stories / reels)
+- Вовлечённость (лайки, комменты, репосты, сохранения)
+- Переходы по ссылкам
+- Лиды → MQL → Оплаты</p>
+<h4 id="e-email-sms-push">Модуль E: Email / SMS / Push</h4>
+<table>
+<thead>
+<tr>
+<th>Метрика</th>
+<th>Описание</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sent</td>
+<td>Отправлено</td>
+</tr>
+<tr>
+<td>Delivered</td>
+<td>Доставлено</td>
+</tr>
+<tr>
+<td>Opened</td>
+<td>Открыто</td>
+</tr>
+<tr>
+<td>Clicked</td>
+<td>Клики</td>
+</tr>
+<tr>
+<td>Leads</td>
+<td>Лиды (через UTM)</td>
+</tr>
+<tr>
+<td>MQL</td>
+<td>Целевые</td>
+</tr>
+<tr>
+<td>Won</td>
+<td>Оплаты</td>
+</tr>
+<tr>
+<td>Assisted Conversions</td>
+<td>Ассистированные конверсии (касание email/SMS → покупка через другой канал)</td>
+</tr>
+</tbody>
+</table>
+<h4 id="f-telegram-">Модуль F: Telegram-алерты</h4>
+<p>Ежедневный отчёт в Telegram (бот) в 10:00 МСК:</p>
+<pre><code>📊 FitBase Marketing — 05.03.2026
+
+Вчера:
+• Лидов: 35 (план: 33) ✅
+• MQL: 12 (план: 10) ✅
+• Оплат: 2
+• Расходы: 68 000 ₽
+
+MTD (март):
+• Лидов: 180 / 1000 (18%)
+• MQL: 55 / 300 (18%)
+• Оплат: 8 / 45 (18%)
+• Бюджет: 350K / 2M (18%)
+
+⚠️ Алерты:
+• 3 лида без обработки &gt; 24ч
+</code></pre>
+<p>Аномалии: если дневной показатель &lt; 50% от среднего за 7 дней → предупреждение.</p>
+<hr />
+<h2 id="7">7. Методология прогноза</h2>
+<h3 id="71-pipeline-based-forecast">7.1. Pipeline-based Forecast</h3>
+<p><strong>Логика:</strong> Текущие сделки на каждой стадии × исторический CR стадии→Won = прогноз оплат.</p>
+<p><strong>Формула:</strong></p>
+<pre><code>Forecast_pipeline = Σ (deals_on_stage_i × CR_stage_i_to_won)
+</code></pre>
+<p>Где <code>CR_stage_i_to_won</code> — процент сделок, дошедших до оплаты из стадии i (рассчитывается по данным за последние 6 месяцев).</p>
+<p><strong>Данные:</strong>
+- <code>stage_history</code> — переходы по стадиям
+- <code>leads</code> — текущая стадия и сумма</p>
+<p><strong>Пример расчёта:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Стадия</th>
+<th>Сделок</th>
+<th>Историч. CR→Won</th>
+<th>Прогноз оплат</th>
+<th>Прогноз выручки</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Квалифицирован</td>
+<td>51</td>
+<td>25%</td>
+<td>13</td>
+<td>1.3M</td>
+</tr>
+<tr>
+<td>Встреча назначена</td>
+<td>25</td>
+<td>40%</td>
+<td>10</td>
+<td>1.0M</td>
+</tr>
+<tr>
+<td>Встреча / КП</td>
+<td>81</td>
+<td>50%</td>
+<td>41</td>
+<td>4.1M</td>
+</tr>
+<tr>
+<td>Возражения</td>
+<td>8</td>
+<td>70%</td>
+<td>6</td>
+<td>0.6M</td>
+</tr>
+<tr>
+<td>Ожидаем оплаты</td>
+<td>11</td>
+<td>90%</td>
+<td>10</td>
+<td>1.0M</td>
+</tr>
+<tr>
+<td><strong>Итого</strong></td>
+<td></td>
+<td></td>
+<td><strong>80</strong></td>
+<td><strong>8.0M</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Горизонт:</strong> 1–4 недели. <strong>Точность:</strong> высокая после 2–3 месяцев накопления данных.</p>
+<h3 id="72-cohort-based-forecast">7.2. Cohort-based Forecast</h3>
+<p><strong>Логика:</strong> Лиды текущего месяца конвертируются по тому же паттерну, что и предыдущие когорты.</p>
+<p><strong>Формула:</strong></p>
+<pre><code>Forecast_cohort_month_M =
+  Leads_month_(M-2) × CR_cohort_age_60d  (уже реализовались)
++ Leads_month_(M-1) × CR_cohort_age_30d  (частично реализовались)
++ Leads_month_M     × CR_cohort_age_0-15d (ещё рано, только начали)
+</code></pre>
+<p>CR рассчитывается по историческим когортам с разбивкой по каналу.</p>
+<p><strong>Горизонт:</strong> 30–60 дней. <strong>Точность:</strong> средняя, растёт с накоплением данных.</p>
+<h3 id="73-trend-based-forecast">7.3. Trend-based Forecast</h3>
+<p><strong>Логика:</strong> Экстраполяция текущего темпа на остаток месяца.</p>
+<p><strong>Формула:</strong></p>
+<pre><code>Forecast_trend = (Won_MTD / days_passed) × days_in_month
+</code></pre>
+<p>Вариант с 7-day rolling average:</p>
+<pre><code>Forecast_trend_7d = Won_last_7d / 7 × days_remaining + Won_MTD
+</code></pre>
+<p><strong>Горизонт:</strong> до конца месяца. <strong>Точность:</strong> грубая, но полезна для ранних алертов (если темп &lt; 80% от плана на 10-й день месяца → сигнал).</p>
+<h3 id="74">7.4. Комбинированный прогноз</h3>
+<p>На дашборде показываются все три значения:</p>
+<table>
+<thead>
+<tr>
+<th>Тип</th>
+<th>Значение</th>
+<th>Уверенность</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pipeline-based</td>
+<td>80 оплат / 8.0M</td>
+<td>Высокая</td>
+</tr>
+<tr>
+<td>Cohort-based</td>
+<td>70 оплат / 7.0M</td>
+<td>Средняя</td>
+</tr>
+<tr>
+<td>Trend-based</td>
+<td>65 оплат / 6.5M</td>
+<td>Низкая</td>
+</tr>
+<tr>
+<td><strong>План</strong></td>
+<td><strong>75 оплат / 7.5M</strong></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>Рекомендация: использовать Pipeline-based как основной, Cohort-based для верификации, Trend-based для ранних алертов.</p>
+<hr />
+<h2 id="8-account-level-tracking">8. Account-Level Tracking</h2>
+<h3 id="81">8.1. Проблема</h3>
+<p>Стандартная сквозная аналитика считает: 1 лид = 1 сделка. У FitBase один аккаунт (сеть/франшиза) может подключить несколько филиалов = несколько сделок. Без account-level tracking каналы, приводящие сетевых клиентов, недооцениваются.</p>
+<h3 id="82">8.2. Реализация</h3>
+<p><strong>Account ID:</strong> <code>contact_id</code> или <code>company_id</code> из AmoCRM. Один контакт/компания → N сделок.</p>
+<p><strong>Расчётные метрики:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Метрика</th>
+<th>Формула</th>
+<th>Описание</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Total Account Value</td>
+<td>SUM(deal_value) по всем сделкам аккаунта</td>
+<td>Общая ценность аккаунта</td>
+</tr>
+<tr>
+<td>Expansion Revenue</td>
+<td>Total Account Value − первая сделка</td>
+<td>Доход от допродаж филиалов</td>
+</tr>
+<tr>
+<td>Expansion Rate</td>
+<td>COUNT(accounts с &gt;1 deal) / COUNT(all accounts)</td>
+<td>Доля расширяющихся аккаунтов</td>
+</tr>
+<tr>
+<td>Net Revenue per Lead</td>
+<td>Total Account Value / COUNT(leads по аккаунту)</td>
+<td>Реальная ценность лида с учётом расширения</td>
+</tr>
+</tbody>
+</table>
+<h3 id="83">8.3. Атрибуция</h3>
+<p>Канал атрибутируется по <strong>первому лиду</strong> аккаунта (first-touch). Expansion Revenue засчитывается тому же каналу.</p>
+<p>Исключение: если второй лид имеет другой utm_source — фиксируем оба (first-touch + last-touch), но Expansion Revenue идёт первому каналу.</p>
+<h3 id="84">8.4. Отображение</h3>
+<p>На дашборде Pipeline &amp; Velocity (Блок 4): таблица аккаунтов с total_deals &gt; 1, sorted by Total Account Value.</p>
+<p>Метрика «Net Revenue per Lead» добавляется в Channel Performance как дополнительная колонка.</p>
+<hr />
+<h2 id="9">9. Этапы реализации</h2>
+<h3 id="phase-1-mvp-23">Phase 1: MVP (2–3 недели)</h3>
+<p><strong>Цель:</strong> Базовая сквозная аналитика из AmoCRM.</p>
+<table>
+<thead>
+<tr>
+<th>Задача</th>
+<th>Описание</th>
+<th>Результат</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ETL AmoCRM → DWH</td>
+<td>Выгрузка deals, contacts, events → ClickHouse</td>
+<td>Таблицы leads, stage_history, accounts</td>
+</tr>
+<tr>
+<td>Executive Overview</td>
+<td>Дашборд 1 — top KPIs</td>
+<td>6 карточек + таблица по странам</td>
+</tr>
+<tr>
+<td>Full Funnel</td>
+<td>Дашборд 3 — waterfall</td>
+<td>Воронка по стадиям + по каналам</td>
+</tr>
+<tr>
+<td>Channel Performance</td>
+<td>Дашборд 4 — базовая версия (без расходов)</td>
+<td>Лиды, MQL, SQL, Won по каналам из UTM</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Зависимости:</strong> AmoCRM API доступ (есть), ClickHouse (развернуть), DataLens (подключить).</p>
+<h3 id="phase-2-34-phase-1">Phase 2: Расходы и план-факт (3–4 недели после Phase 1)</h3>
+<p><strong>Цель:</strong> Подключить рекламные кабинеты, добавить расходы, запустить план-факт.</p>
+<table>
+<thead>
+<tr>
+<th>Задача</th>
+<th>Описание</th>
+<th>Результат</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ETL: Яндекс.Директ</td>
+<td>Расходы, показы, клики → ad_costs</td>
+<td>Данные по кампаниям РФ</td>
+</tr>
+<tr>
+<td>ETL: Google Ads</td>
+<td>Расходы КЗ/УЗ → ad_costs</td>
+<td>Данные по кампаниям КЗ/УЗ</td>
+</tr>
+<tr>
+<td>ETL: Meta</td>
+<td>Расходы КЗ/УЗ → ad_costs</td>
+<td>Данные по кампаниям КЗ/УЗ</td>
+</tr>
+<tr>
+<td>ETL: VK Ads</td>
+<td>Расходы РФ → ad_costs</td>
+<td>Данные по кампаниям РФ</td>
+</tr>
+<tr>
+<td>Google Sheets → plans</td>
+<td>Плановые значения → таблица plans</td>
+<td>Планы по каналам и странам</td>
+</tr>
+<tr>
+<td>UTM-стандартизация</td>
+<td>Маппинг старых UTM → новые + обновление кампаний</td>
+<td>Единая разметка</td>
+</tr>
+<tr>
+<td>Plan/Fact</td>
+<td>Дашборд 5 — variance</td>
+<td>План-факт по каналам</td>
+</tr>
+<tr>
+<td>Campaigns &amp; Creatives</td>
+<td>Дашборд 9 — карточки креативов</td>
+<td>Креативы с метриками</td>
+</tr>
+<tr>
+<td>Channel Performance v2</td>
+<td>Добавить расходы (CPL, CPA, CAC, ROAS)</td>
+<td>Полная таблица каналов</td>
+</tr>
+</tbody>
+</table>
+<h3 id="phase-3-seo-34-phase-2">Phase 3: Когорты, прогноз, SEO (3–4 недели после Phase 2)</h3>
+<p><strong>Цель:</strong> Аналитика во времени и прогнозирование.</p>
+<table>
+<thead>
+<tr>
+<th>Задача</th>
+<th>Описание</th>
+<th>Результат</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Lead Cohorts</td>
+<td>Дашборд 6 — когортная матрица</td>
+<td>Конверсии по неделям/месяцам</td>
+</tr>
+<tr>
+<td>Forecast</td>
+<td>Дашборд 7 — три модели прогноза</td>
+<td>Pipeline + Cohort + Trend</td>
+</tr>
+<tr>
+<td>Pipeline &amp; Velocity</td>
+<td>Дашборд 10 — скорость воронки + аккаунты</td>
+<td>Bottleneck + Expansion</td>
+</tr>
+<tr>
+<td>ETL: Яндекс.Метрика</td>
+<td>Данные по страницам → web_sessions</td>
+<td>Трафик и конверсии по страницам</td>
+</tr>
+<tr>
+<td>SEO / Content</td>
+<td>Дашборд 8 — по страницам и статьям</td>
+<td>Эффективность контента</td>
+</tr>
+<tr>
+<td>Operational Pulse</td>
+<td>Дашборд 2 — ежедневный пульс</td>
+<td>Утренний чек</td>
+</tr>
+</tbody>
+</table>
+<h3 id="phase-4-46-phase-3">Phase 4: Дополнительные модули (4–6 недель после Phase 3)</h3>
+<p><strong>Цель:</strong> Покрытие всех каналов и автоматизация алертов.</p>
+<table>
+<thead>
+<tr>
+<th>Задача</th>
+<th>Описание</th>
+<th>Результат</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ETL: BotHelp</td>
+<td>Данные ботов → bot_sessions</td>
+<td>Воронка ботов</td>
+</tr>
+<tr>
+<td>Вебинарная воронка</td>
+<td>Модуль A</td>
+<td>Регистрация → оплата</td>
+</tr>
+<tr>
+<td>BotHelp-воронка</td>
+<td>Модуль B</td>
+<td>Подписка → оплата</td>
+</tr>
+<tr>
+<td>Посевы</td>
+<td>Модуль C</td>
+<td>Площадки → ROAS</td>
+</tr>
+<tr>
+<td>SMM</td>
+<td>Модуль D</td>
+<td>Охваты → лиды</td>
+</tr>
+<tr>
+<td>Email/SMS/Push</td>
+<td>Модуль E + assisted conversions</td>
+<td>Все коммуникационные каналы</td>
+</tr>
+<tr>
+<td>Telegram-алерты</td>
+<td>Модуль F</td>
+<td>Ежедневный отчёт + аномалии</td>
+</tr>
+<tr>
+<td>ETL: TikTok/YouTube</td>
+<td>При запуске каналов</td>
+<td>Расходы TikTok/YouTube</td>
+</tr>
+<tr>
+<td>GA для КЗ/УЗ</td>
+<td>При установке GA</td>
+<td>Веб-аналитика КЗ/УЗ</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_3">Сводный таймлайн</h3>
+<pre><code>Неделя 1–3:   ████████████ Phase 1 (MVP)
+Неделя 4–7:   ░░░░████████████████ Phase 2 (Расходы + План-факт)
+Неделя 7–10:  ░░░░░░░░░░░░████████████ Phase 3 (Когорты + Прогноз + SEO)
+Неделя 10–16: ░░░░░░░░░░░░░░░░░░░░████████████████ Phase 4 (Модули)
+</code></pre>
+<hr />
+<h2 id="10">10. Требования к дизайну</h2>
+<h3 id="101">10.1. Визуальный стиль</h3>
+<p><strong>Референс:</strong> Elly Analytics B2B Dashboard. Подробный разбор: <a href="../References/Elly_B2B_Dashboard.md">References/Elly_B2B_Dashboard.md</a></p>
+<table>
+<thead>
+<tr>
+<th>Элемент</th>
+<th>Требование</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Тема</td>
+<td>Тёмная (dark mode)</td>
+</tr>
+<tr>
+<td>Карточки KPI</td>
+<td>Чистые, с крупным числом, спарклайном и Δ vs предыдущий период</td>
+</tr>
+<tr>
+<td>Таблицы</td>
+<td>Компактные, тепловая карта для % выполнения, цветовая кодировка</td>
+</tr>
+<tr>
+<td>Графики</td>
+<td>Минималистичные, без лишней декорации</td>
+</tr>
+<tr>
+<td>Шрифт</td>
+<td>Единый, читаемый (Inter или системный sans-serif)</td>
+</tr>
+<tr>
+<td>Цветовая палитра</td>
+<td>Акцентный цвет FitBase (синий) + зелёный (хорошо) + красный (плохо) + жёлтый (внимание)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="102-datalens">10.2. Особенности DataLens</h3>
+<p>DataLens поддерживает кастомизацию через:
+- Настройку цветовых палитр в чартах
+- Кастомные CSS в Embedded-режиме (ограниченно)
+- Тёмную тему (встроенная поддержка)
+- Markdown-виджеты для заголовков и описаний</p>
+<p>Ограничения: карточки креативов с превью (изображениями) — нужен workaround через Markdown-виджет с img или embedded iframe.</p>
+<h3 id="103">10.3. Навигация</h3>
+<p>Все 10 дашбордов — на одном воркбуке DataLens с табами:</p>
+<pre><code>[CEO] [Pulse] [Funnel] [Channels] [Plan/Fact] [Cohorts] [Forecast] [SEO] [Creatives] [Pipeline]
+</code></pre>
+<p>Дополнительные модули (Phase 4) — отдельные табы или второй воркбук.</p>
+<hr />
+<h2 id="_4">Приложения</h2>
+<h3 id="a_1">Приложение A: Ссылки на референсы</h3>
+<table>
+<thead>
+<tr>
+<th>Документ</th>
+<th>Путь</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Текущее состояние аналитики</td>
+<td><a href="../Current_State/README.md">Current_State/README.md</a></td>
+</tr>
+<tr>
+<td>Профиль компании</td>
+<td><a href="../../Knowledge/company_profile.md">Knowledge/company_profile.md</a></td>
+</tr>
+<tr>
+<td>Разбор Elly Analytics B2B</td>
+<td><a href="../References/Elly_B2B_Dashboard.md">References/Elly_B2B_Dashboard.md</a></td>
+</tr>
+<tr>
+<td>Конспект IPF5 (TripleTen)</td>
+<td><a href="../References/IPF5_Skvoznaya_Lecture.md">References/IPF5_Skvoznaya_Lecture.md</a></td>
+</tr>
+<tr>
+<td>Таблица план-факта TripleTen</td>
+<td><a href="../References/Marketing_PlanFact_Sheet.md">References/Marketing_PlanFact_Sheet.md</a></td>
+</tr>
+<tr>
+<td>Все ссылки</td>
+<td><a href="../References/Links.md">References/Links.md</a></td>
+</tr>
+</tbody>
+</table>
+<h3 id="b-mql-sql">Приложение B: Определения MQL и SQL</h3>
+<p>Полные определения: <a href="../Current_State/README.md#определения-mql-и-sql">Current_State/README.md → Определения MQL и SQL</a></p>
+<p><strong>MQL:</strong> лид соответствует ICP (тип бизнеса, 50+ клиентов, правильное гео, есть контакт). В AmoCRM: поле «Тип заявки» = MQL, стадия ≥ «Квалифицирован».</p>
+<p><strong>SQL:</strong> MQL + ЛПР на связи + боль сформулирована + сроки + согласие на демо. В AmoCRM: поле «Тип заявки» = SQL, стадия ≥ «Встреча проведена / КП».</p>
+<h3 id="c-amocrm">Приложение C: Воронки AmoCRM</h3>
+<p><strong>Теплые:</strong> Новый лид → В обработке → Квалифицирован → Встреча назначена → Встреча / КП → Возражения → Ожидаем оплаты → Оплата пришла / Отказ / Заморозка</p>
+<p><strong>Вебинары/лидмагниты:</strong> Регистрация → Участие → Прогрев → Квалификация → Передача в «Теплые»</p>
+</main>
+</body>
+</html>
