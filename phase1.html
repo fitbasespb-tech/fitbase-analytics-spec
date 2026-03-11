@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Этап 1 — Channel Performance RF (DataLens)</title>
+  <style>
+    :root {
+      --bg: #050814;
+      --bg-card: #0f111a;
+      --bg-soft: #151825;
+      --border: #292d42;
+      --text: #e1e4f0;
+      --muted: #8b8fa8;
+      --accent: #6c63ff;
+      --accent-soft: #8b83ff;
+      --green: #4ade80;
+      --red: #f97373;
+      --yellow: #fbbf24;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: radial-gradient(circle at top, #15172a 0, #050814 52%);
+      color: var(--text);
+      line-height: 1.6;
+      font-size: 14px;
+      padding: 40px 20px 64px;
+    }
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      background: rgba(5, 8, 20, 0.9);
+      border-radius: 20px;
+      border: 1px solid rgba(76, 81, 120, 0.65);
+      box-shadow: 0 24px 60px rgba(0,0,0,.75);
+      padding: 28px 32px 40px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 24px;
+      font-weight: 800;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(26, 29, 46, 0.9);
+      border: 1px solid rgba(76,81,120,.6);
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .pill span {
+      font-weight: 600;
+      color: var(--accent-soft);
+    }
+    section {
+      margin-top: 28px;
+    }
+    h2 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      border-bottom: 1px solid rgba(60,64,98,.7);
+      padding-bottom: 6px;
+    }
+    h3 {
+      font-size: 15px;
+      margin-top: 18px;
+      margin-bottom: 6px;
+      color: var(--accent-soft);
+    }
+    p { margin-bottom: 8px; }
+    ul { padding-left: 18px; margin-bottom: 8px; }
+    li { margin-bottom: 4px; }
+    .muted { color: var(--muted); }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.1fr);
+      gap: 18px;
+    }
+    .card {
+      background: radial-gradient(circle at top left, #1a1d30 0, #0b0e19 55%);
+      border-radius: 16px;
+      border: 1px solid rgba(60,64,98,.9);
+      padding: 16px 18px 14px;
+    }
+    .card h3 { margin-top: 2px; }
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .kpi {
+      background: #0b0d18;
+      border-radius: 10px;
+      padding: 8px 10px;
+      border: 1px solid rgba(56,60,92,.7);
+      font-size: 12px;
+    }
+    .kpi-label {
+      color: var(--muted);
+      font-size: 11px;
+      margin-bottom: 3px;
+    }
+    .kpi-value {
+      font-size: 17px;
+      font-weight: 700;
+    }
+    .kpi-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .kpi-sub span { color: var(--green); }
+    .screenshot {
+      margin-top: 10px;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(76,81,120,.8);
+      background: #050814;
+    }
+    .screenshot img {
+      width: 100%;
+      display: block;
+    }
+    .screenshot .caption {
+      font-size: 11px;
+      padding: 7px 10px 8px;
+      color: var(--muted);
+      background: #050814;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 12px;
+    }
+    th, td {
+      padding: 6px 8px;
+      border-bottom: 1px solid rgba(44,48,78,.8);
+      text-align: left;
+    }
+    th {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: var(--muted);
+      background: #111326;
+    }
+    tr:nth-child(even) td {
+      background: #090b17;
+    }
+    code {
+      background: #111326;
+      color: var(--accent-soft);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 6px;
+      font-size: 12px;
+    }
+    .link-pill {
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(76,81,120,.8);
+      background: #0a0d18;
+    }
+    a { color: var(--accent-soft); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    @media (max-width: 900px) {
+      main { padding: 22px 18px 30px; }
+      header { flex-direction: column; align-items: flex-start; }
+      .grid-2 { grid-template-columns: minmax(0,1fr); }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Этап 1 · Channel Performance RF</h1>
+      <div class="pill" style="margin-top:6px;">
+        <span>Срок:</span> 1 неделя · РФ · DataLens
+      </div>
+    </div>
+    <div class="links">
+      <div class="link-pill"><a href="index.html">← Общее ТЗ (дашборды)</a></div>
+      <div class="link-pill"><a href="full.html">Полное ТЗ (HTML 1:1)</a></div>
+      <div class="link-pill"><a href="Phase1_DataLens_RF.md">Текст ТЗ этапа 1 (Markdown)</a></div>
+      <div class="link-pill"><a href="https://github.com/fitbasespb-tech/fitbase-analytics-spec" target="_blank">GitHub‑репозиторий</a></div>
+    </div>
+  </header>
+
+  <section>
+    <h2>1. Цель этапа</h2>
+    <p>За <strong>1 неделю</strong> собрать в Yandex DataLens первый рабочий дашборд по <strong>каналам РФ</strong>:</p>
+    <ul>
+      <li>от <strong>трат / охватов / кликов</strong>,</li>
+      <li>до <strong>воронки Лид → MQL → SQL → Продажа</strong> по данным AmoCRM.</li>
+    </ul>
+    <p>Гео этого этапа: <strong>только РФ</strong>. В фокусе: Яндекс.Директ, VK Ads и агрегированные каналы (SEO, SMM, Direct, Seeding).</p>
+  </section>
+
+  <section>
+    <h2>2. Дашборд «Обзор маркетинга РФ»</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3>Структура верхней части</h3>
+        <p class="muted">Аналог первого скрина: один экран с основными цифрами и трендами.</p>
+        <div class="kpi-row">
+          <div class="kpi">
+            <div class="kpi-label">Расходы, ₽</div>
+            <div class="kpi-value">1 600 000</div>
+            <div class="kpi-sub">Пред. период: 1 570 000 · <span>+2%</span></div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Лиды</div>
+            <div class="kpi-value">1 050</div>
+            <div class="kpi-sub">Пред. период: 980 · <span>+7%</span></div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Продажи</div>
+            <div class="kpi-value">82</div>
+            <div class="kpi-sub">Пред. период: 75 · <span>+9%</span></div>
+          </div>
+        </div>
+        <div class="kpi-row" style="margin-top:8px;">
+          <div class="kpi">
+            <div class="kpi-label">MQL</div>
+            <div class="kpi-value">320</div>
+            <div class="kpi-sub">Конверсия Лид → MQL: <span>30%</span></div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">SQL</div>
+            <div class="kpi-value">150</div>
+            <div class="kpi-sub">MQL → SQL: <span>47%</span></div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Выручка, ₽</div>
+            <div class="kpi-value">8.2M</div>
+            <div class="kpi-sub">CAC: <span>19 500 ₽</span></div>
+          </div>
+        </div>
+        <h3>Нижние показатели</h3>
+        <ul>
+          <li>Конверсия <strong>Трафик → Лиды</strong>, %</li>
+          <li>Конверсии <strong>Лиды → MQL → SQL → Продажи</strong>, %</li>
+          <li><strong>CAC</strong>, ₽ и <strong>выручка на лид</strong>, ₽</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Референс‑макет</h3>
+        <div class="muted" style="font-size:12px;margin-bottom:4px;">Сводная страница с карточками и графиками (аналог примера)</div>
+        <div class="screenshot">
+          <img src="img/phase1-dashboard.png" alt="Пример обзора маркетинга (карточки + графики)">
+          <div class="caption">Референс: верхняя страница — KPI‑карточки, donut‑диаграмма по выручке и график выручка/расходы.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Дашборд «Каналы и кампании РФ»</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3>Иерархическая таблица</h3>
+        <p>Строки:</p>
+        <ul>
+          <li>Уровень 1 — группы каналов: платные, органика, прямые, прочие;</li>
+          <li>Уровень 2 — отдельные каналы (Яндекс.Директ, VK, SEO, SMM и т.д.);</li>
+          <li>Уровень 3 — кампании внутри каждого канала.</li>
+        </ul>
+        <p>Основные колонки (подписи для пользователя):</p>
+        <table>
+          <tr>
+            <th>Показатель</th>
+            <th>Комментарий</th>
+          </tr>
+          <tr>
+            <td>Канал / Кампания</td>
+            <td>Название канала или кампании</td>
+          </tr>
+          <tr>
+            <td>Расходы, ₽</td>
+            <td>Сумма расходов по периоду</td>
+          </tr>
+          <tr>
+            <td>Показы, Клики, CPM, CPC</td>
+            <td>Классические медиа‑метрики</td>
+          </tr>
+          <tr>
+            <td>Трафик (сеансы)</td>
+            <td>Сеансы по UTM из Метрики</td>
+          </tr>
+          <tr>
+            <td>Контакты / Лиды</td>
+            <td>Количество лидов в AmoCRM</td>
+          </tr>
+          <tr>
+            <td>Стоимость контакта, ₽</td>
+            <td>Расходы / Лиды</td>
+          </tr>
+          <tr>
+            <td>CR Сеансы → Лиды</td>
+            <td>Лиды / Трафик, %</td>
+          </tr>
+          <tr>
+            <td>MQL, SQL, Продажи</td>
+            <td>Количество по стадиям воронки</td>
+          </tr>
+          <tr>
+            <td>Выручка, ₽; CAC; ROAS</td>
+            <td>Финансовые показатели по каналу/кампании</td>
+          </tr>
+        </table>
+        <p class="muted" style="margin-top:6px;">В DataLens таблица должна поддерживать сворачивание/раскрытие уровней и цветовую индикацию по стоимостям и конверсиям.</p>
+      </div>
+      <div class="card">
+        <h3>Референс полной таблицы</h3>
+        <div class="screenshot">
+          <img src="img/phase1-channels.png" alt="Пример таблицы по каналам и кампаниям">
+          <div class="caption">Референс: таблица Channels — группы каналов, каналы и кампании с расходами, трафиком, конверсиями и стоимостью контакта.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Источники данных и соединения (сжатое резюме)</h2>
+    <h3>4.1. Источники</h3>
+    <ul>
+      <li><strong>AmoCRM</strong>: таблица <code>leads_rf</code> (Лид, MQL, SQL, Продажа, выручка, UTM, страна = РФ).</li>
+      <li><strong>Рекламные кабинеты РФ</strong>: таблица <code>ad_costs_rf</code> (дата, канал, кампания, показы, клики, расходы).</li>
+      <li><strong>Яндекс.Метрика</strong> по домену <code>fitbase.io</code>: таблица <code>web_rf</code> (дата, UTM, визиты, пользователи).</li>
+      <li><strong>Справочник каналов</strong> <code>dim_channel</code>: маппинг UTM → нормализованный канал.</li>
+    </ul>
+    <h3>4.2. Связки</h3>
+    <ul>
+      <li>Лиды → Канал: по <code>utm_source / utm_medium / utm_campaign</code> через <code>dim_channel</code>.</li>
+      <li>Расходы → Канал: по полю <code>channel</code> в <code>ad_costs_rf</code> (тот же справочник).</li>
+      <li>Трафик → Канал: по UTM‑меткам в <code>web_rf</code> через <code>dim_channel</code>.</li>
+    </ul>
+    <p class="muted">На этапе 1 допустим приближённый матчинг кампаний по названию, главное — корректное разнесение по каналам РФ.</p>
+  </section>
+
+  <section>
+    <h2>5. Приоритеты и объём этапа</h2>
+    <ul>
+      <li><strong>Срок:</strong> 1 неделя.</li>
+      <li><strong>Гео:</strong> только РФ.</li>
+      <li><strong>Каналы (обязательно):</strong> Яндекс.Директ, VK Ads.</li>
+      <li><strong>Статусы лида:</strong> Лид, MQL, SQL, Продажа (Won).</li>
+      <li>Разбивка по стадиям воронки и отдельным воронкам («Теплые», «Вебинары») — <strong>последующие этапы</strong>, не входят в этот спринт.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>
+
