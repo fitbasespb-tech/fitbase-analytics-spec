@@ -2,6 +2,15 @@
 
 *Last updated: 2026-03-05*
 
+## 0. Ссылки
+
+- **GitHub‑репозиторий ТЗ:**  
+  `https://github.com/fitbasespb-tech/fitbase-analytics-spec`
+- **HTML‑визуализация общего ТЗ (макеты дашбордов):**  
+  `https://fitbasespb-tech.github.io/fitbase-analytics-spec/`
+- **Полная HTML‑версия ТЗ 1:1:**  
+  `https://fitbasespb-tech.github.io/fitbase-analytics-spec/full.html`
+
 ## 1. Цель этапа
 
 За **1 неделю** собрать в Yandex DataLens первый рабочий дашборд по **каналам РФ**:
