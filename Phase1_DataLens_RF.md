@@ -10,6 +10,8 @@
   `https://fitbasespb-tech.github.io/fitbase-analytics-spec/`
 - **Полная HTML‑версия ТЗ 1:1:**  
   `https://fitbasespb-tech.github.io/fitbase-analytics-spec/full.html`
+- **HTML‑визуализация этапа 1 (с макетами):**  
+  `https://fitbasespb-tech.github.io/fitbase-analytics-spec/phase1.html`
 
 ## 1. Цель этапа
 
