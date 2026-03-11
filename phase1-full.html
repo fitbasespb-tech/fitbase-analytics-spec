@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang='ru'>
+<head>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+  <title>ТЗ Этап 1 — Channel Performance RF</title>
+  <style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 40px 24px 80px; background: #050814; color: #e1e4f0; line-height: 1.6; }
+a { color: #8b83ff; }
+a:hover { text-decoration: underline; }
+main { max-width: 960px; margin: 0 auto; background: #0f111a; padding: 32px 40px; border-radius: 16px; box-shadow: 0 18px 45px rgba(0,0,0,.6); border: 1px solid #2a2e45; }
+h1, h2, h3, h4 { font-weight: 700; }
+h1 { font-size: 26px; margin-top: 0; }
+h2 { font-size: 20px; margin-top: 32px; border-bottom: 1px solid #2a2e45; padding-bottom: 6px; }
+h3 { font-size: 16px; margin-top: 22px; }
+code { background: #1a1d2e; padding: 2px 4px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; }
+pre code { display: block; padding: 12px 14px; overflow-x: auto; }
+pre { background: #0b0d18; border-radius: 8px; border: 1px solid #2a2e45; }
+table { border-collapse: collapse; width: 100%; margin: 16px 0 24px; font-size: 13px; }
+th, td { border: 1px solid #2a2e45; padding: 8px 10px; }
+th { background: #1a1d2e; text-align: left; }
+tr:nth-child(even) { background: #101325; }
+ul, ol { padding-left: 22px; }
+hr { border: none; border-top: 1px solid #2a2e45; margin: 32px 0; }
+.small-meta { color: #8b8fa8; font-size: 13px; margin-bottom: 16px; }
+.top-links { font-size: 13px; color: #8b8fa8; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+<main>
+  <div class='top-links'>
+    <a href='index.html'>&larr; Общее ТЗ (дашборды)</a> ·
+    <a href='phase1.html'>Визуализация этапа 1</a>
+  </div>
+  <h1 id="1-channel-performance-rf-yandex-datalens">Этап 1: Дашборд «Channel Performance RF» в Yandex DataLens</h1>
+<p><em>Last updated: 2026-03-05</em></p>
+<h2 id="0">0. Ссылки</h2>
+<ul>
+<li><strong>GitHub‑репозиторий ТЗ:</strong><br />
+<a href="https://github.com/fitbasespb-tech/fitbase-analytics-spec">https://github.com/fitbasespb-tech/fitbase-analytics-spec</a></li>
+<li><strong>HTML‑визуализация общего ТЗ (макеты дашбордов):</strong><br />
+<a href="https://fitbasespb-tech.github.io/fitbase-analytics-spec/">https://fitbasespb-tech.github.io/fitbase-analytics-spec/</a></li>
+<li><strong>Полная HTML‑версия ТЗ 1:1:</strong><br />
+<a href="https://fitbasespb-tech.github.io/fitbase-analytics-spec/full.html">https://fitbasespb-tech.github.io/fitbase-analytics-spec/full.html</a></li>
+<li><strong>HTML‑визуализация этапа 1 (с макетами):</strong><br />
+<a href="https://fitbasespb-tech.github.io/fitbase-analytics-spec/phase1.html">https://fitbasespb-tech.github.io/fitbase-analytics-spec/phase1.html</a></li>
+</ul>
+<h2 id="1">1. Цель этапа</h2>
+<p>За <strong>1 неделю</strong> собрать в Yandex DataLens первый рабочий дашборд по <strong>каналам РФ</strong>:</p>
+<ul>
+<li>от <strong>трат / охватов / кликов</strong>,</li>
+<li>до <strong>воронки Лид → MQL → SQL → Продажа</strong> по данным AmoCRM.</li>
+</ul>
+<p>Гео этого этапа: <strong>только РФ</strong>.<br />
+Каналы в фокусе: <strong>Яндекс.Директ, VK Ads</strong>, а также агрегированные каналы (SEO, SMM, Direct, Seeding и т.п.).</p>
+<hr />
+<h2 id="2-mvp">2. Источники и данные (MVP)</h2>
+<h3 id="21-amocrm">2.1. AmoCRM (обязательно)</h3>
+<p>Выгрузить в DWH (ClickHouse) таблицу по РФ:</p>
+<p>Таблица <code>leads_rf</code>:</p>
+<ul>
+<li><code>lead_id</code> — ID сделки</li>
+<li><code>created_at</code> — дата создания</li>
+<li><code>closed_at</code> — дата закрытия</li>
+<li><code>pipeline_id</code> — ID воронки (понадобится позже, сейчас можно не детализировать)</li>
+<li><code>status</code> — текущая стадия</li>
+<li><code>deal_value</code> — сумма сделки (поле «Бюджет»), ₽</li>
+<li><code>lead_type</code> — Lead / MQL / SQL (из поля «Тип заявки»)</li>
+<li><code>is_won</code> — флаг «Оплата пришла»</li>
+<li><code>country</code> — RF / KZ / UZ</li>
+<li><code>utm_source</code>, <code>utm_medium</code>, <code>utm_campaign</code>, <code>utm_content</code>, <code>utm_term</code></li>
+</ul>
+<p>Фильтр: <code>country = 'RF'</code>.</p>
+<p>Из этой таблицы на этапе 1 нам нужны агрегаты по РФ:</p>
+<ul>
+<li>Leads — все сделки</li>
+<li>MQL — сделки с <code>lead_type = 'MQL'</code></li>
+<li>SQL — сделки с <code>lead_type = 'SQL'</code></li>
+<li>Sales (Won) — сделки с <code>is_won = true</code></li>
+<li>Revenue — сумма <code>deal_value</code> по <code>is_won = true</code></li>
+</ul>
+<h3 id="22">2.2. Рекламные кабинеты РФ</h3>
+<p>Таблица <code>ad_costs_rf</code> (ежедневная, РФ):</p>
+<ul>
+<li><code>date</code></li>
+<li><code>channel</code> — нормализованный: <code>yandex</code>, <code>vk</code>, а также агрегированные бесплатные каналы</li>
+<li><code>campaign_id</code></li>
+<li><code>campaign_name</code></li>
+<li><code>impressions</code></li>
+<li><code>clicks</code></li>
+<li><code>spend</code> (₽)</li>
+</ul>
+<p>Заполнение:</p>
+<ul>
+<li><strong>обязательно</strong>: Яндекс.Директ (РФ)</li>
+<li><strong>обязательно</strong>: VK Ads (РФ)</li>
+<li><strong>агрегировано из Метрики (без ручного ввода):</strong></li>
+<li>Прямые переходы (прямой трафик)</li>
+<li>SEO (поисковая органика)</li>
+<li>SMM (органика из соцсетей)</li>
+<li>Email и SMS (если помечены UTM)</li>
+<li>Звонки (если есть отдельный источник/метка)</li>
+<li>Переходы в мессенджеры (как источник трафика, не путать с самими группами/сообществами)</li>
+</ul>
+<p>На этапе 1 <strong>посевы (seeding)</strong> не подключаем, т.к. сейчас для них нужен ручной ввод.</p>
+<p>На этапе 1 по агрегированным каналам допустимо не иметь детальных <code>campaign_id</code> — достаточно уровня «канал / день».</p>
+<h4 id="221-1">2.2.1. Полный список каналов на этапе 1</h4>
+<p><strong>Платные каналы (кабинеты):</strong></p>
+<ul>
+<li>Яндекс.Директ (поиск, РСЯ и др.)</li>
+<li>VK Реклама (VK Ads)</li>
+</ul>
+<p><strong>Бесплатные / условно бесплатные каналы (из Метрики и UTM):</strong></p>
+<ul>
+<li>Прямые переходы (direct / type‑in)</li>
+<li>SEO (поисковая органика: Яндекс / Google)</li>
+<li>SMM (органика из соцсетей: VK, Telegram‑канал, Instagram* и др.)</li>
+<li>Email‑рассылки</li>
+<li>SMS‑рассылки</li>
+<li>Звонки (если есть отдельный источник или UTM‑метка)</li>
+<li>Переходы в мессенджеры (переход по ссылке в WhatsApp / Telegram / др.; именно как источник трафика, не группы/сообщества)</li>
+</ul>
+<h3 id="23-fitbaseio">2.3. Яндекс.Метрика (РФ, <code>fitbase.io</code>)</h3>
+<p>Таблица <code>web_rf</code>:</p>
+<ul>
+<li><code>date</code></li>
+<li><code>utm_source</code>, <code>utm_medium</code>, <code>utm_campaign</code></li>
+<li><code>users</code> — уникальные пользователи (посетители)</li>
+</ul>
+<p>Используется для оценки «охвата (посетителей)» по каналам и расчёта CR Посетители → Лиды.</p>
+<h3 id="24">2.4. Справочник каналов</h3>
+<p>Таблица <code>dim_channel</code>:</p>
+<ul>
+<li><code>utm_source</code>, <code>utm_medium</code></li>
+<li><code>channel</code> — нормализованное имя канала, например:</li>
+<li>платные: <code>Yandex</code>, <code>VK</code></li>
+<li>бесплатные: <code>Прямые</code>, <code>SEO</code>, <code>SMM</code>, <code>Email</code>, <code>SMS</code>, <code>Звонки</code>, <code>Мессенджеры</code></li>
+</ul>
+<p>На этапе 1 важно <strong>жёстко зафиксировать</strong> правила маппинга, чтобы все источники (AmoCRM, Метрика, расходы) давали один и тот же <code>channel</code>.</p>
+<hr />
+<h2 id="3">3. Логика соединения данных</h2>
+<p>Цель: получить по каждому каналу РФ связку <strong>расходы → трафик → лиды/MQL/SQL/продажи</strong>.</p>
+<ol>
+<li><strong>Канал у лида (по UTM, если есть)</strong>:</li>
+<li>по <code>utm_source</code> / <code>utm_medium</code> / <code>utm_campaign</code> из <code>leads_rf</code></li>
+<li>через <code>dim_channel</code> → нормализованный <code>channel</code></li>
+<li><strong>Канал у расходов</strong>:</li>
+<li><code>ad_costs_rf.channel</code> → тот же справочник <code>dim_channel</code> (или идентичные значения)</li>
+<li><strong>Канал у посетителей</strong>:</li>
+<li><code>web_rf.utm_source / utm_medium / utm_campaign</code> → <code>dim_channel.channel</code></li>
+</ol>
+<p>На первом этапе допускается <strong>приближённый матчинг кампаний</strong> (по названию / части строки), главное — корректное разнесение по каналам РФ.</p>
+<h3 id="31-utm">3.1. Матчинг лидов без UTM</h3>
+<p>UTM‑метки не всегда есть (особенно в SEO и части органических каналов). Для таких случаев закладывается дополнительная логика:</p>
+<ol>
+<li><strong>SEO (поисковая органика)</strong>  </li>
+<li>В Метрике источник/тип: <code>yandex / organic</code>, <code>google / organic</code> → канал <code>SEO</code>.  </li>
+<li>
+<p>Лиды в AmoCRM без UTM попадают в SEO, если:</p>
+<ul>
+<li>точка входа (страница/лендинг) относится к списку SEO‑страниц (блог, посадки из поиска), или</li>
+<li>в CRM стоит источник «Сайт / Поисковик» (если такое поле/тег используется).</li>
+</ul>
+</li>
+<li>
+<p><strong>Прямые переходы</strong>  </p>
+</li>
+<li>В Метрике источник/тип: <code>direct / (none)</code> → канал <code>Прямые</code>.  </li>
+<li>
+<p>Лиды без UTM и без явных признаков платных/SEO‑источников попадают в канал «Прямые».</p>
+</li>
+<li>
+<p><strong>SMM (органика соцсетей)</strong>  </p>
+</li>
+<li>В Метрике источники: vk.com, t.me, instagram.com и др. при отсутствии платных UTM → канал <code>SMM</code>.  </li>
+<li>
+<p>Лиды без UTM, пришедшие с форм/чатов на соцсетях, также относятся к SMM (по URL источника или полю «Источник» в CRM).</p>
+</li>
+<li>
+<p><strong>Email, SMS, мессенджеры, звонки</strong>  </p>
+</li>
+<li>Если есть UTM‑метки → обычный UTM‑матчинг.  </li>
+<li>Если UTM нет, но:<ul>
+<li>лид создан из конкретного интеграционного источника (email‑сервис, SMS‑шлюз, бот, телефония), или</li>
+<li>в CRM стоит соответствующий тег/источник («Email‑рассылка», «SMS», «WhatsApp», «Звонок»),</li>
+</ul>
+</li>
+<li>то такой лид относится к каналу <code>Email</code> / <code>SMS</code> / <code>Мессенджеры</code> / <code>Звонки</code> соответственно.</li>
+</ol>
+<p>Важно: для всех правил выше нужно явно задокументировать в коде ETL и справочнике <code>dim_channel</code>, какие значения источников/меток относятся к какому каналу — чтобы матчинг был воспроизводим и прозрачен.</p>
+<hr />
+<h2 id="4-channel-performance-rf">4. Дашборд «Channel Performance RF» (первая версия)</h2>
+<h3 id="41">4.1. Фильтры</h3>
+<ul>
+<li>Период (даты начала/конца, по умолчанию — текущий месяц)</li>
+<li>Канал (мультивыбор)</li>
+<li>Гео = РФ (жёстко зашито в источниках / фильтрах)</li>
+</ul>
+<h3 id="42-kpi">4.2. Верхняя панель KPI</h3>
+<p>Карточки (агрегат по выбранным фильтрам):</p>
+<ul>
+<li><strong>Расходы, ₽</strong> — суммарные расходы (Spend)</li>
+<li><strong>Лиды</strong> — количество лидов (Leads)</li>
+<li><strong>MQL</strong> — количество MQL</li>
+<li><strong>SQL</strong> — количество SQL</li>
+<li><strong>Продажи</strong> — количество оплаченных сделок (Sales / Won)</li>
+<li><strong>Выручка, ₽</strong> — сумма <code>deal_value</code> по Won (Revenue)</li>
+<li><strong>CAC, ₽</strong> — Расходы / Продажи (Spend / Sales)</li>
+</ul>
+<p>При наличии времени можно добавить подпись <code>vs предыдущий период</code> для пары ключевых метрик.</p>
+<h3 id="43">4.3. Основная таблица по каналам (с возможностью расширения)</h3>
+<p>Строка = <strong>канал РФ</strong> (<code>Яндекс</code>, <code>VK</code>, <code>SEO</code>, <code>SMM</code>, <code>Прямые</code>, <code>Email</code>, <code>SMS</code>, <code>Звонки</code>, <code>Мессенджеры</code> и т.д.).</p>
+<p>Колонки (подписи — по‑русски, в скобках — техническое имя поля при необходимости):</p>
+<ul>
+<li><strong>Канал</strong> (<code>channel</code>) — название канала</li>
+<li><strong>Расходы, ₽</strong> (<code>spend</code>)</li>
+<li><strong>Показы</strong> (<code>impressions</code>) — там, где есть: Яндекс, VK</li>
+<li><strong>Клики</strong> (<code>clicks</code>)</li>
+<li><strong>CTR</strong> — Clicks / Impressions</li>
+<li><strong>CPC, ₽</strong> — Spend / Clicks</li>
+<li><strong>Посетители</strong> (<code>users</code>) — уникальные пользователи из Метрики</li>
+<li><strong>Лиды</strong> (<code>leads</code>) — лиды в AmoCRM</li>
+<li><strong>MQL</strong> — MQL</li>
+<li><strong>SQL</strong> — SQL</li>
+<li><strong>Продажи</strong> (<code>sales_won</code>) — оплаченные сделки</li>
+<li><strong>Выручка всего, ₽</strong> (<code>revenue_total</code>)</li>
+<li><strong>Выручка с лидов текущего месяца, ₽</strong> (<code>revenue_current_cohort</code>)</li>
+<li><strong>Выручка с лидов прошлых месяцев, ₽</strong> (<code>revenue_past_cohorts</code>)</li>
+<li><strong>Доля выручки из прошлых месяцев, %</strong> (<code>revenue_past_share</code>)</li>
+<li><strong>CPL, ₽</strong> — Spend / Leads</li>
+<li><strong>CPA MQL, ₽</strong> — Spend / MQL</li>
+<li><strong>CPA SQL, ₽</strong> — Spend / SQL</li>
+<li><strong>CAC, ₽</strong> — Spend / Sales</li>
+<li><strong>ROAS</strong> — Revenue_total / Spend</li>
+</ul>
+<p><strong>Требование к структуре:</strong><br />
+Сразу проектировать таблицу как <strong>иерархическую</strong> (раскрывающуюся) в DataLens:</p>
+<ul>
+<li>Уровень 1 — канал (<code>channel</code>)</li>
+<li>Уровень 2 — кампания (<code>campaign</code>, кампании внутри канала)</li>
+</ul>
+<p>Детализация до креативов (уровень 3) на этом этапе <strong>не нужна</strong>, но структура должна позволять добавить её на следующем этапе без переделки схемы.</p>
+<h3 id="44">4.4. Визуальный верхнеуровневый блок</h3>
+<p>Помимо таблицы, на том же дашборде:</p>
+<ul>
+<li><strong>Столбчатая диаграмма 1</strong> — выручка по каналам (ТОП‑каналы по выручке, можно показывать stacked: текущий месяц / прошлые месяцы)</li>
+<li><strong>Столбчатая диаграмма 2</strong> — CAC по каналам (сортировка от лучшего к худшему)</li>
+<li><strong>Линейный график</strong> — динамика лидов и продаж по дням (при возможности — добавить MQL и SQL)</li>
+</ul>
+<h3 id="45">4.5. Разделение выручки по когортам лидов</h3>
+<p>Чтобы честно видеть вклад «длинного хвоста» (лидов из прошлых месяцев), в модель и дашборд закладывается раздельный учёт:</p>
+<ul>
+<li><strong>Месяц лида</strong> (<code>lead_month</code>) — месяц по дате создания лида (<code>created_at</code>).</li>
+<li><strong>Месяц оплаты</strong> (<code>deal_month</code>) — месяц по дате оплаты (<code>closed_at</code> с <code>is_won = true</code>).</li>
+</ul>
+<p>В витрине для текущего выбранного периода считаются:</p>
+<ul>
+<li><code>revenue_current_cohort</code> — выручка в выбранном периоде только от лидов с <code>lead_month = выбранный_месяц</code>.</li>
+<li><code>revenue_past_cohorts</code> — выручка в выбранном периоде от лидов с <code>lead_month &lt; выбранный_месяц</code>.</li>
+<li><code>revenue_total = revenue_current_cohort + revenue_past_cohorts</code>.</li>
+</ul>
+<p>Это позволяет по каждому каналу видеть:</p>
+<ul>
+<li>сколько денег даёт текущий маркетинг (лиды этого месяца),</li>
+<li>сколько доходит «хвостом» от прошлых месяцев,</li>
+<li>и долю выручки, приходящую из прошлых когорт.</li>
+</ul>
+<p>Отдельная сводка по аналогии с текущей Google‑таблицей (лиды/оплаты/доход с лидов месяца и с «старых» когорт) может быть оформлена как дополнительный таб DataLens или отдельный блок в дашборде «Каналы».</p>
+<hr />
+<h2 id="5">5. Приоритеты и ограничения</h2>
+<ul>
+<li><strong>Срок этапа:</strong> 1 неделя.</li>
+<li><strong>Гео:</strong> только РФ.</li>
+<li><strong>Каналы (обязательно):</strong> Яндекс.Директ, VK Ads.</li>
+<li><strong>Каналы (агрегировано, по возможности):</strong> SEO, SMM, Direct, Seeding и др.</li>
+<li><strong>Статусы лида:</strong> с первого этапа в дашборд должны попадать минимум:</li>
+<li>Лиды (все сделки)</li>
+<li>MQL</li>
+<li>SQL</li>
+<li>Продажи (Sales / Won)</li>
+<li><strong>Разбивка по стадиям воронки и по воронкам (<code>Теплые</code>, <code>Вебинары</code>)</strong> — не входит в этап 1, будет реализована на следующих этапах.</li>
+</ul>
+</main>
+</body>
+</html>
